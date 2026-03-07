@@ -14,9 +14,9 @@ if (!fs.existsSync(uploadDir)) {
 // Store temporary data for image submissions
 const pendingImageSubmissions = new Map();
 
-// Please replace these with your actual Twilio Account SID and Auth Token or store them in .env
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || 'ACf722b3a4b357f3c3015ea44b974bf8ce';
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || 'b3d4ae0b84ce412d65a0a1f06f296109';
+// Please store Twilio Account SID and Auth Token in .env
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 
 // Function to download image
 async function downloadImage(url) {
