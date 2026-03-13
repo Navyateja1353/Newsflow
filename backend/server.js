@@ -1,4 +1,5 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 const express = require("express");
 const app = express();
@@ -11,15 +12,10 @@ const newsRoutes = require("./routes/news");
 const adminRoutes = require("./routes/admin");
 const publicRoutes = require("./routes/public");
 const whatsappRoutes = require("./routes/whatsapp");
-const path = require("path");
-
 const cors = require('cors');
 app.use(cors());
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.json({ limit: '50mb' })); // Revert to standard body parser
-
-
-app.use(express.text({ limit: '50mb', type: 'text/*' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use("/api", authRoutes);

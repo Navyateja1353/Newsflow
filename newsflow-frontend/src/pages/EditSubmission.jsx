@@ -32,14 +32,22 @@ function EditSubmission() {
             setContent(res.data.message || "");
 
             if (res.data.image_urls && res.data.image_urls.length > 0) {
-                // Usually take the first image attached
-                setImageUrl(res.data.image_urls[0]);
+                const cleanedUrls = cleanImageUrls(res.data.image_urls);
+                if (cleanedUrls.length > 0) {
+                    setImageUrl(cleanedUrls[0]);
+                }
             }
         } catch (error) {
             console.error(error);
             alert("Error loading submission. It may have been deleted or published already.");
             navigate("/dashboard");
         }
+    };
+
+    // Helper to sanitize database urls that might just be a comma due to GROUP_CONCAT
+    const cleanImageUrls = (urls) => {
+        if (!urls || !Array.isArray(urls)) return [];
+        return urls.filter(url => url && url.trim().length > 1);
     };
 
     const handleManualPublish = async (e) => {
@@ -123,7 +131,7 @@ function EditSubmission() {
                         <div style={{ marginBottom: '2rem', textAlign: 'center', background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
                             <p style={{ fontWeight: '600', marginBottom: '0.5rem', textAlign: 'left' }}>Attached Media</p>
                             <img
-                                src={`http://localhost:3000${imageUrl}`}
+                                src={imageUrl.startsWith('http') ? imageUrl : `http://localhost:3000${imageUrl}`}
                                 alt="Submission media"
                                 style={{ maxWidth: '100%', maxHeight: '350px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
                             />

@@ -7,6 +7,7 @@ import CreateNews from "./pages/CreateNews";
 import EditNews from "./pages/EditNews";
 import Newspaper from "./pages/Newspaper";
 import EditSubmission from "./pages/EditSubmission";
+import EditPublished from "./pages/EditPublished";
 
 function App() {
 
@@ -18,8 +19,10 @@ function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/create-news" element={<CreateNews />} />
       <Route path="/edit-news/:id" element={<EditNews />} />
-      <Route path="/newspaper" element={<Newspaper />} />
+      <Route path="/newspaper" element={<Navigate to="/newspaper/1" replace />} />
+      <Route path="/newspaper/:page" element={<Newspaper />} />
       <Route path="/edit-submission/:id" element={<EditSubmission />} />
+      <Route path="/edit-published/:id" element={<EditPublished />} />
     </Routes>
   );
 }

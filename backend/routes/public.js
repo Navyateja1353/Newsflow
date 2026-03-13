@@ -16,7 +16,7 @@ router.get('/all-published', (req, res) => {
             UNION ALL
             
             SELECT (n.id + 1000000) as id, NULL as submission_id, n.title as headline, 
-                   n.content, _utf8mb4'సాధారణ' COLLATE utf8mb4_unicode_ci as category, n.image_url, 
+                   n.content, _utf8mb4'సాధారణ' COLLATE utf8mb4_unicode_ci as category, NULL as image_url, 
                    n.created_at as published_date, _utf8mb4'active' COLLATE utf8mb4_unicode_ci as status, 
                    _utf8mb4'Web Dashboard' COLLATE utf8mb4_unicode_ci as reporter_phone, 
                    _utf8mb4'published' COLLATE utf8mb4_unicode_ci as submission_status, 

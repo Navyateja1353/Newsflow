@@ -29,11 +29,28 @@ async function downloadImage(url) {
 
         // Add Basic Auth if it's a Twilio URL
         if (url.includes('twilio.com') || url.includes('Twilio')) {
-            if (TWILIO_ACCOUNT_SID === 'YOUR_TWILIO_ACCOUNT_SID' || TWILIO_AUTH_TOKEN === 'YOUR_TWILIO_AUTH_TOKEN') {
+            let sid = process.env.TWILIO_ACCOUNT_SID;
+            let token = process.env.TWILIO_AUTH_TOKEN;
+
+            // If process.env fails, manually read from the file as a fallback
+            if (!sid || sid === 'YOUR_TWILIO_ACCOUNT_SID') {
+                try {
+                    const envPath = require('path').join(__dirname, '../../.env');
+                    const envFile = require('fs').readFileSync(envPath, 'utf8');
+                    const sidMatch = envFile.match(/TWILIO_ACCOUNT_SID=(.+)/);
+                    const tokenMatch = envFile.match(/TWILIO_AUTH_TOKEN=(.+)/);
+                    if (sidMatch) sid = sidMatch[1].trim();
+                    if (tokenMatch) token = tokenMatch[1].trim();
+                } catch (e) {
+                    console.error('Failed manual .env parse', e.message);
+                }
+            }
+
+            if (!sid || !token || sid === 'YOUR_TWILIO_ACCOUNT_SID' || token === 'YOUR_TWILIO_AUTH_TOKEN') {
                 console.error('❌ Twilio credentials missing! Cannot download image.');
                 return null;
             }
-            const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+            const auth = Buffer.from(`${sid}:${token}`).toString('base64');
             config.headers = {
                 'Authorization': `Basic ${auth}`
             };
@@ -103,9 +120,38 @@ function processImageSubmission(phone, message, mediaUrl) {
     }
     else {
         if (message.trim() === '') {
-            pendingImageSubmissions.set(phone, {
-                imageUrl: mediaUrl,
-                timestamp: Date.now()
+            console.log(`📸 Standalone Image received without caption.`);
+
+            const sql = "INSERT INTO news_submissions (phone, message, has_image) VALUES (?, ?, ?)";
+            db.query(sql, [phone, "", 1], (err, result) => {
+                if (err) {
+                    console.log('❌ Database save error:', err.message);
+                } else {
+                    const submissionId = result.insertId;
+
+                    // Cache the submission ID so the next text message links to it
+                    pendingImageSubmissions.set(phone, {
+                        submissionId: submissionId,
+                        timestamp: Date.now()
+                    });
+
+                    const imageSql = "INSERT INTO images (submission_id, image_url) VALUES (?, ?)";
+                    db.query(imageSql, [submissionId, mediaUrl], (err, imgResult) => {
+                        if (err) {
+                            console.log('❌ Image save error:', err.message);
+                        } else {
+                            // Background download and update
+                            downloadImage(mediaUrl).then(localPath => {
+                                if (localPath) {
+                                    db.query("UPDATE images SET image_url = ? WHERE id = ?", [localPath, imgResult.insertId], (upErr) => {
+                                        if (upErr) console.log('❌ Failed to update image path:', upErr.message);
+                                        else console.log(`✅ Updated image to local path: ${localPath}`);
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
             });
 
             return `🖼️ చిత్రం స్వీకరించబడింది!\n\nదయచేసి ఈ చిత్రానికి వివరణ/వార్తను టైప్ చేయండి (గరిష్ఠంగా 5000 అక్షరాలు):\n\nఉదాహరణ:\n"హైదరాబాద్లో కొత్త మెట్రో నిర్మాణం. ఈ చిత్రం శివంపేటలో తీయబడింది."`;
@@ -153,7 +199,7 @@ function processTextMessage(phone, message) {
         cleanMsg === 'hello' || cleanMsg === 'Hello' ||
         lowerMsg.includes('హాయ్') || lowerMsg.includes('హలో')) {
         pendingImageSubmissions.delete(phone);
-        return `స్వాగతం వార్తాపత్రికకు! 📰\n\nదయచేసి ఎంచుకోండి:\n1️⃣ టెక్స్ట్ వార్తలు\n2️⃣ ఇమేజ్ వార్తలు\n3️⃣ నేటి వార్తాపత్రిక చూడండి\n\n1, 2 లేదా 3తో ప్రత్యుత్తరం ఇవ్వండి`;
+        return `Welcome to the Newspaper! \n\nPlease select:\n1. Text News\n2. Image News\n3. View Today's Newspaper\n\nReply with 1, 2, or 3`;
     }
     else if (cleanMsg === '1') {
         pendingImageSubmissions.delete(phone);
@@ -167,40 +213,39 @@ function processTextMessage(phone, message) {
         return `📰 నేటి వార్తాపత్రిక:\nhttp://localhost:3000/newspaper\n\nలేదా వెబ్‌సైట్ చూడండి:\nhttp://localhost:3000`;
     }
     else {
-        // Check if user has pending image
-        if (pendingImageSubmissions.has(phone)) {
-            const pendingImage = pendingImageSubmissions.get(phone);
+        // Check database for a recently pending image from this user (nodemon-proof fallback)
+        const checkSql = `
+            SELECT id FROM news_submissions 
+            WHERE phone = ? AND has_image = 1 AND message = '' 
+            AND created_at > (NOW() - INTERVAL 15 MINUTE) 
+            ORDER BY id DESC LIMIT 1
+        `;
 
-            const sql = "INSERT INTO news_submissions (phone, message, has_image) VALUES (?, ?, ?)";
-            db.query(sql, [phone, message, 1], (err, result) => {
-                if (err) {
-                    console.log('❌ Database save error:', err.message);
-                } else {
-                    const submissionId = result.insertId;
-                    console.log(`✅ Long text submission saved with image. ID: ${submissionId}, Length: ${message.length}`);
+        db.query(checkSql, [phone], (err, results) => {
+            if (err) {
+                console.log('❌ Database check error:', err.message);
+                fallbackTextSave();
+                return;
+            }
 
-                    const imageSql = "INSERT INTO images (submission_id, image_url) VALUES (?, ?)";
-                    db.query(imageSql, [submissionId, pendingImage.imageUrl], (err, imgResult) => {
-                        if (err) {
-                            console.log('❌ Image save error:', err.message);
-                        } else {
-                            // Background download and update
-                            downloadImage(pendingImage.imageUrl).then(localPath => {
-                                if (localPath) {
-                                    db.query("UPDATE images SET image_url = ? WHERE id = ?", [localPath, imgResult.insertId], (upErr) => {
-                                        if (upErr) console.log('❌ Failed to update image path:', upErr.message);
-                                        else console.log(`✅ Updated image to local path: ${localPath}`);
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
+            if (results && results.length > 0) {
+                const submissionId = results[0].id;
+                // Append the text to the recently saved image
+                const updateSql = "UPDATE news_submissions SET message = ? WHERE id = ?";
+                db.query(updateSql, [message, submissionId], (upErr, upResult) => {
+                    if (upErr) {
+                        console.log('❌ Database update error:', upErr.message);
+                        fallbackTextSave();
+                    } else {
+                        console.log(`✅ Appended text caption to existing image submission ID: ${submissionId}`);
+                    }
+                });
+            } else {
+                fallbackTextSave();
+            }
+        });
 
-            pendingImageSubmissions.delete(phone);
-            return `✅ ధన్యవాదాలు! మీ చిత్రం మరియు వివరణ సేవ్ చేయబడ్డాయి. వార్త పొడవు: ${message.length} అక్షరాలు. నిర్వాహకులు సమీక్షిస్తారు.`;
-        } else {
+        function fallbackTextSave() {
             // Save text submission - now supports LONGTEXT
             const sql = "INSERT INTO news_submissions (phone, message) VALUES (?, ?)";
             db.query(sql, [phone, message], (err, result) => {
@@ -208,11 +253,13 @@ function processTextMessage(phone, message) {
                     console.log('❌ Database save error:', err.message);
                 } else {
                     console.log(`✅ Text submission from ${phone} saved. ID: ${result.insertId}, Length: ${message.length} characters`);
+                    console.log(`📝 Message preview: ${message.substring(0, 200)}...`);
                 }
             });
-
-            return `✅ ధన్యవాదాలు! మీ వార్త సేవ్ చేయబడింది. వార్త పొడవు: ${message.length} అక్షరాలు. నిర్వాహకులు సమీక్షిస్తారు.`;
         }
+
+        pendingImageSubmissions.delete(phone);
+        return `✅ ధన్యవాదాలు! మీ వార్త సేవ్ చేయబడింది. వార్త పొడవు: ${message.length} అక్షరాలు. నిర్వాహకులు సమీక్షిస్తారు.`;
     }
 }
 
@@ -239,8 +286,13 @@ function processWhatsAppMessage(phone, message, isImage, mediaUrl) {
 }
 
 // WhatsApp webhook
+router.get('/webhook', (req, res) => {
+    res.send("Webhook GET endpoint is active!");
+});
+
 router.post('/webhook', (req, res) => {
     console.log('\n📨 ===== WHATSAPP WEBHOOK RECEIVED =====');
+    console.dir(req.body, { depth: null, colors: true });
 
     let message = '';
     let phone = '';
@@ -310,8 +362,12 @@ router.post('/webhook', (req, res) => {
 
     let reply = processWhatsAppMessage(phone, message, isImage, mediaUrl);
 
+    const twilio = require('twilio');
+    const twiml = new twilio.twiml.MessagingResponse();
+    twiml.message(reply);
+
     res.set('Content-Type', 'text/xml');
-    res.send(`<Response><Message>${reply}</Message></Response>`);
+    res.send(twiml.toString());
 });
 
 // Clean old pending submissions every 10 minutes

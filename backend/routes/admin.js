@@ -258,6 +258,111 @@ router.post('/restore-article/:id', verifyToken, isAdmin, (req, res) => {
     });
 });
 
+// ============================================
+// PUBLISHED ARTICLES MANAGEMENT
+// ============================================
+
+// Get all published articles for Admin Dashboard
+router.get('/published', isAdmin, (req, res) => {
+    const query = `
+        SELECT pa.*, ns.phone as reporter_phone 
+        FROM published_articles pa
+        LEFT JOIN news_submissions ns ON pa.submission_id = ns.id
+        WHERE pa.status = 'active'
+        ORDER BY pa.published_date DESC
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('❌ Error fetching published articles:', err.message);
+            res.status(500).json({ error: err.message });
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Get a single published article for editing
+router.get('/published/:id', isAdmin, (req, res) => {
+    const id = req.params.id;
+    const query = `
+        SELECT pa.*, ns.phone as reporter_phone, ns.message as original_message 
+        FROM published_articles pa
+        LEFT JOIN news_submissions ns ON pa.submission_id = ns.id
+        WHERE pa.id = ?
+    `;
+
+    db.query(query, [id], (err, results) => {
+        if (err) {
+            console.error('❌ Error fetching published article:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+        res.json(results[0]);
+    });
+});
+
+// Update a LIVE published article in place
+router.put('/published/:id', isAdmin, (req, res) => {
+    const id = req.params.id;
+    const { headline, content, category, image_url } = req.body;
+
+    console.log(`📰 Editing Live Article #${id} by Admin ${req.user.id}`);
+
+    const updateSql = `
+        UPDATE published_articles 
+        SET headline = ?, content = ?, category = ?, image_url = ?
+        WHERE id = ?
+    `;
+
+    db.query(updateSql, [headline, content, category, image_url, id], (err, result) => {
+        if (err) {
+            console.error('❌ Edit live article error:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+
+        // Log action
+        db.query(
+            'INSERT INTO admin_actions (action_type, article_id, details) VALUES (?, ?, ?)',
+            ['edit_published', id, JSON.stringify({ headline, category, is_live_edit: true })],
+            (logErr) => {
+                if (logErr) console.log('⚠️ Action log skipped:', logErr.message);
+            }
+        );
+
+        res.json({ success: true, message: `Updated LIVE Article #${id}` });
+    });
+});
+
+// Hard delete a published article entirely
+router.delete('/published/:id', isAdmin, (req, res) => {
+    const id = req.params.id;
+
+    // First get the submission_id to optionally clean it up too, but for safety we only delete the published_article row
+    db.query('DELETE FROM published_articles WHERE id = ?', [id], (err, result) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+        } else if (result.affectedRows === 0) {
+            res.status(404).json({ error: 'Article not found' });
+        } else {
+            db.query(
+                'INSERT INTO admin_actions (action_type, article_id) VALUES (?, ?)',
+                ['hard_delete_article', id],
+                (logErr) => {
+                    if (logErr) console.log('⚠️ Action log skipped');
+                }
+            );
+            res.json({ success: true, message: `Permanently deleted article #${id}` });
+        }
+    });
+});
+
 // Revert text submission
 router.post('/revert/text/:id', verifyToken, isAdmin, (req, res) => {
     const id = req.params.id;

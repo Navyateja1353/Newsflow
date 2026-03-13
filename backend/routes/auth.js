@@ -46,39 +46,55 @@ router.post("/register", async (req, res) => {
 const jwt = require("jsonwebtoken");
 
 // LOGIN USER
-router.post("/login", (req, res) => {
-  const { email, password } = req.body;
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    console.log("Login attempt for email:", email);
 
-  db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
-    if (err) {
-      return res.status(500).json({ error: err });
-    }
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
+      if (err) {
+        console.error("Database error during login:", err);
+        return res.status(500).json({ error: err.message || err });
+      }
 
-    if (result.length === 0) {
-      return res.status(400).json({ message: "User not found" });
-    }
+      if (result.length === 0) {
+        console.warn("Login failed: User not found for email:", email);
+        return res.status(400).json({ message: "User not found" });
+      }
 
-    const user = result[0];
+      const user = result[0];
 
-    const isMatch = await bcrypt.compare(password, user.password);
+      try {
+        const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid password" });
-    }
-    console.log("JWT Secret:", process.env.JWT_SECRET);
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+        if (!isMatch) {
+          console.warn("Login failed: Invalid password for email:", email);
+          return res.status(400).json({ message: "Invalid password" });
+        }
+        const secret = process.env.JWT_SECRET || "fallback_super_secret_key_123";
+        console.log("JWT Secret resolved. Token generated.");
 
-    res.json({
-      message: "Login successful",
-      token: token,
-      role: user.role,
-      layout_preferences: user.layout_preferences
+        const token = jwt.sign(
+          { id: user.id, role: user.role },
+          secret,
+          { expiresIn: "1d" }
+        );
+
+        res.json({
+          message: "Login successful",
+          token: token,
+          role: user.role,
+          layout_preferences: user.layout_preferences
+        });
+      } catch (bcryptError) {
+        console.error("Bcrypt comparison error:", bcryptError);
+        return res.status(500).json({ error: "Password verification failed" });
+      }
     });
-  });
+  } catch (err) {
+    console.error("Catastrophic error in /login:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 module.exports = router;

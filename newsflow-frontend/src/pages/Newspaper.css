@@ -2,17 +2,37 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Tiro+Telugu&display=swap');
 
-.newspaper-container {
-    max-width: 1400px;
-    /* Wider for full screen print feel */
-    margin: 0 auto;
-    padding: 15px;
+.newspaper-viewer-bg {
+    background-color: #525659;
+    /* PDF viewer dark grey background */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.newspaper-page {
+    /* Exact A3 proportions, but allow responsive scaling */
+    width: 100%;
+    min-height: 1587px;
+    height: max-content;
+    /* Allow page to grow rather than crop content */
+    max-width: 1123px;
+    margin: 0 auto 40px auto;
+    /* Gap between pages */
+    padding: 30px;
+    box-sizing: border-box;
+    /* Internal margin so content doesn't touch the very edge */
     background-color: #fff;
     color: #000;
     font-family: 'Tiro Telugu', serif;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    /* Physical page shadow effect */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Header Section Restyling */
+
 .site-header {
     margin-bottom: 20px;
 }
@@ -25,7 +45,7 @@
 
 /* The Main Purple/Magenta Banner */
 .main-logo-box {
-    flex: 3;
+    flex: 4;
     background-color: #b31481;
     /* Precise magenta from screenshot */
     border: 3px solid #8c0c63;
@@ -33,9 +53,31 @@
     padding: 15px 30px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+}
+
+/* Internal Ad Placeholder Styling */
+.ad-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.ad-placeholder:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.header-top-ad {
+    margin-bottom: 20px;
+    padding: 10px;
 }
 
 .main-logo-wrapper {
@@ -46,12 +88,15 @@
 }
 
 .main-logo-text {
-    font-size: 8rem;
+    font-size: 7.5rem;
     font-weight: 900;
     color: #fff;
-    text-shadow: 4px 4px 0px #333, -2px -2px 0px #333, 2px -2px 0px #333, -2px 2px 0px #333;
-    line-height: 1;
+    text-shadow: 4px 4px 0px #222, -2px -2px 0px #222, 2px -2px 0px #222, -2px 2px 0px #222;
+    line-height: 0.85;
     letter-spacing: -2px;
+    margin-bottom: 5px;
+    white-space: nowrap; /* Prevent wrapping which causes vertical cutoff */
+    padding-right: 20px; /* Give the last character some breathing room */
 }
 
 .logo-sub-text {
@@ -63,9 +108,12 @@
 
 .telugu-daily {
     color: #fff;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
     letter-spacing: 1px;
+    position: absolute;
+    bottom: 5px;
+    left: 20px;
 }
 
 .express-badge {
@@ -73,67 +121,83 @@
     color: #000;
     font-weight: 900;
     font-size: 1.8rem;
-    padding: 5px 25px;
-    clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
-    margin-right: -30px;
+    padding: 5px 20px 5px 30px;
+    clip-path: polygon(15px 0, 100% 0, 100% 100%, 15px 100%, 0 50%);
+    position: absolute;
+    bottom: 5px;
+    right: -10px;
+    box-shadow: -2px 2px 5px rgba(0,0,0,0.5);
 }
 
 /* The Wanted Reporters Sidebar */
 .side-contact-box {
-    flex: 1;
-    border: 2px solid #555;
+    flex: 1.2;
+    border: 4px solid #b31481;
     background: #fff;
     display: flex;
     flex-direction: column;
     text-align: center;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .wanted-heading {
-    background: #000;
+    background: #555;
     color: #fff;
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     font-weight: bold;
     padding: 5px 0;
 }
 
 .side-logo-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 900;
-    padding: 5px;
+    padding: 10px 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .side-riw {
-    color: #000;
+    color: #444;
+    text-shadow: 1px 1px 0px #ccc;
 }
 
 .side-express {
-    color: #d1121c;
-    margin-left: 5px;
+    background: #d1121c;
+    color: #fff;
+    margin-left: 10px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 1.8rem;
 }
 
 .contact-details {
-    font-size: 0.85rem;
-    padding: 0 10px;
+    font-size: 0.95rem;
+    padding: 0 15px;
     text-align: justify;
     flex-grow: 1;
+    font-weight: bold;
+    color: #333;
+    line-height: 1.4;
 }
 
 .contact-number-box {
-    margin-top: 5px;
+    margin-top: auto;
+    padding-bottom: 5px;
 }
 
 .contact-label {
-    font-weight: bold;
-    color: #000;
-    font-size: 1.1rem;
+    display: none; /* Hide label to match reference where it's absent or minimal */
 }
 
 .contact-number {
     color: #d1121c;
-    font-size: 2.2rem;
+    font-size: 2.8rem;
     font-weight: 900;
     line-height: 1;
     padding-bottom: 5px;
+    letter-spacing: 2px;
 }
 
 /* Green Information Bar */
@@ -154,100 +218,260 @@
     margin-top: 10px;
 }
 
-/* Specific Grid for the Top News on Page 1 */
-.page-one-top-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 20px;
-    border-bottom: 3px solid #000;
-    padding-bottom: 20px;
+/* Page Visibility States */
+.active-page {
+    display: flex;
 }
 
-.top-news-col {
+.hidden-page {
+    display: none;
+}
+
+/* Specific Grid for the Top News on Page 1 (Magazine Style) */
+.magazine-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    margin-bottom: 10px;
+    border-bottom: 3px solid #000;
+    padding-bottom: 12px;
+    grid-template-areas:
+        "lead sidebar-left sidebar-right"
+        "secondary secondary bottom-featured";
+}
+
+.magazine-item {
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
-.top-news-middle {
-    border-left: 1px solid #ccc;
-    border-right: 1px solid #ccc;
-    padding: 0 15px;
+.lead {
+    grid-area: lead;
+    padding-right: 15px;
 }
 
-/* Featured Spanning Block */
-.featured-row-block {
-    margin-bottom: 20px;
-    border-bottom: 2px dashed #ccc;
-    padding-bottom: 20px;
+.sidebar-left {
+    grid-area: sidebar-left;
+    padding-right: 15px;
 }
 
-.featured-row-block .article-title {
-    font-size: 2.5rem;
-    text-align: center;
-    margin-bottom: 15px;
+.sidebar-right {
+    grid-area: sidebar-right;
 }
 
-/* The exact replica masonry column layout for remaining articles */
-.news-masonry-layout {
-    column-count: 5;
-    column-gap: 20px;
-    column-rule: 1px solid #ccc;
+.secondary {
+    grid-area: secondary;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+    padding-right: 15px;
+}
+
+.bottom-featured {
+    grid-area: bottom-featured;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+}
+
+/* Dynamic News Grid Layout (replaces masonry) */
+.dynamic-news-grid {
+    display: grid;
+    /* We always define exactly 5 columns of equal width for the mathematical grid */
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 20px; /* Base unit for deterministic CSS masonry spans */
+    grid-auto-flow: dense; /* The layout engine secret for minimizing whitespace */
+    gap: 10px; /* Tightly pack elements */
     width: 100%;
+}
+
+/* Base article block */
+.news-block {
+    background-color: #fff;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    break-inside: avoid;
+    /* Fallback bottom line */
+    border-bottom: 2px solid #ccc; 
+    box-sizing: border-box;
+    height: 100%; /* Important for grid stretching */
+}
+
+/* Article Sizing Spans
+   Based on a 5-column grid:
+    small:    1 col  (side news, briefs)
+    medium:   2 cols (standard articles)
+    large:    3 cols (secondary features)
+    feature:  5 cols (massive banner news, rare)
+*/
+.news-block.small {
+    grid-column: span 1;
+}
+
+.news-block.medium {
+    grid-column: span 2;
+}
+
+.news-block.feature {
+    grid-column: span 3;
+}
+
+.news-block.banner {
+    grid-column: 1 / -1; /* spans all 5 columns */
+    border-bottom: 4px solid #000;
+}
+
+/* Advertisement Block */
+.advertisement-block {
+    width: 100%;
+    border: 2px dashed #999;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    margin-top: auto; /* Push to bottom */
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+.advertisement-block::before {
+    content: "ADVERTISEMENT ( " attr(data-height) " )";
+    font-size: 14px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    color: #aaa;
+    text-align: center;
+    position: absolute;
+    top: 5px;
+    width: 100%;
+}
+
+.ad-sponsor-text {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #444;
 }
 
 /* Colored Title Variants */
 .title-bg-red {
     background-color: #d1121c;
     color: #fff;
-    padding: 5px;
-    display: inline-block;
+    padding: 8px 10px;
+    display: block;
+    text-align: center;
 }
 
 .title-bg-blue {
     background-color: #0056b3;
     color: #fff;
-    padding: 5px;
-    display: inline-block;
+    padding: 8px 10px;
+    display: block;
+    text-align: center;
 }
 
 .title-bg-green {
     background-color: #008837;
     color: #fff;
-    padding: 5px;
-    display: inline-block;
+    padding: 8px 10px;
+    display: block;
+    text-align: center;
 }
 
-/* Shared Article Styling */
-.news-block {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px dashed #a0a0a0;
-    display: flex;
-    flex-direction: column;
+/* Shared Article Styling Handled by Grid above */
+
+/* Background Variations */
+.bg-light-gray {
+    background-color: #f5f5f5;
+    padding: 0px 4px 4px 4px;
+    /* Tight flush padding */
+    border: none;
+    /* Solid border bottom is handled by .news-block */
 }
 
-/* Inside the Blocks */
+.bg-white {
+    background-color: #ffffff;
+    padding: 0px 4px 4px 4px;
+    /* Tight flush padding */
+}
+
 .article-header-group {
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     text-align: left;
+    margin-top: 5px;
 }
 
 .article-title {
     font-size: 1.25rem;
-    font-weight: bold;
-    color: #1a1a1a;
-    line-height: 1.3;
-    margin: 0 0 6px 0;
+    font-weight: 800;
+    color: #000;
+    line-height: 1.25;
+    margin: 0 0 5px 0;
     letter-spacing: -0.2px;
+    font-family: 'Tiro Telugu', 'Times New Roman', serif;
+}
+
+/* Typography Hierarchy Classes (Grid-based Priority) */
+.title-banner {
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.2px;
+    font-family: 'Tiro Telugu', 'Times New Roman', serif;
+    margin-bottom: 8px;
+}
+
+.title-feature {
+    font-size: 1.45rem;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+
+.title-medium {
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 4px;
+}
+
+.title-small {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 4px;
+}
+
+/* Image Layout Configurations */
+.layout-stacked {
+    display: flex;
+    flex-direction: column;
+}
+
+.layout-side-image {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.layout-side-image .article-image-container {
+    width: 45%;
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.layout-side-image .article-content {
+    width: 55%;
+    margin-top: 0;
 }
 
 .article-image-container {
     width: 100%;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .article-img {
@@ -259,13 +483,14 @@
 }
 
 .article-content {
-    font-size: 0.95rem;
-    line-height: 1.4;
+    font-size: 1.05rem; 
+    line-height: 1.4; /* Tighter line-height to reduce vertical spread */
     text-align: justify;
-    color: #333;
-    letter-spacing: 0.1px;
-    /* Simulate dense newspaper print */
-    word-spacing: -1px;
+    color: #1a1a1a; 
+    letter-spacing: normal;
+    word-spacing: normal;
+    font-family: 'Tiro Telugu', 'Georgia', serif;
+    margin-top: 4px;
 }
 
 .inline-category-tag {
@@ -284,9 +509,23 @@
     font-weight: normal;
 }
 
+/* Custom Telugu & Bilingual Styles */
+.telugu-font {
+    font-family: 'Tiro Telugu', sans-serif;
+}
+
+.publisher-block hr {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.mapping-text {
+    letter-spacing: 5px;
+}
+
 /* --- FOOTER SWATCHES --- */
 .newspaper-footer {
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 .color-swatch-strip {
@@ -306,13 +545,13 @@
 /* --- RESPONSIVENESS AND PRINTING --- */
 
 @media (max-width: 1200px) {
-    .news-masonry-layout {
+    .layout-masonry-regional, .layout-masonry-announcements, .layout-masonry-editorial, .layout-masonry-standard {
         column-count: 4;
     }
 }
 
 @media (max-width: 1024px) {
-    .news-masonry-layout {
+    .layout-masonry-regional, .layout-masonry-announcements, .layout-masonry-editorial, .layout-masonry-standard  {
         column-count: 3;
     }
 
@@ -322,7 +561,7 @@
 }
 
 @media (max-width: 640px) {
-    .news-masonry-layout {
+    .layout-masonry-regional, .layout-masonry-announcements, .layout-masonry-editorial, .layout-masonry-standard, .news-masonry-layout {
         column-count: 1;
         column-rule: none;
     }
@@ -344,22 +583,648 @@
         background: #fff;
     }
 
-    .newspaper-container {
-        padding: 0;
-        max-width: 100%;
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .zoom-close-btn:hover {
+        background: #c0392b;
+    }
+
+    .epaper-header-bar,
+    .epaper-red-nav,
+    .epaper-grey-toolbar,
+    .epaper-page-title-bar,
+    .epaper-sidebar,
+    .article-zoom-modal {
+        display: none !important;
+    }
+
+    .epaper-main-container {
+        display: block !important;
+        background: #fff !important;
+    }
+
+    .epaper-content-area {
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .newspaper-viewer-bg {
+        background-color: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    @page {
+        size: auto;
+        margin: 0;
+    }
+
+    .newspaper-page {
+        padding: 30px !important;
+        width: 1123px !important;
+        height: 1587px !important; /* Fix to A3 height so it scales perfectly */
+        max-width: none !important; /* DO NOT restrict width, forces browser scale-to-fit */
+        max-height: none !important; 
+        transform: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        overflow: hidden !important; /* Hide anything that spills off physically */
+        box-sizing: border-box !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        display: flex !important; /* Override inline styles from React if printing all */
     }
 
     .no-print {
         display: none !important;
     }
 
-    .news-masonry-layout {
-        column-count: 5;
-        column-gap: 20px;
+    /* Keep the exact magazine grid layout */
+    .magazine-grid {
+        display: grid !important;
+        grid-template-columns: 2fr 1fr 1fr !important;
+        grid-template-areas:
+            "lead sidebar-left sidebar-right"
+            "secondary secondary bottom-featured" !important;
     }
 
+    /* Ensure masonry remains consistent with JS packing which expects 4 columns */
+    .news-masonry-layout {
+        column-count: 4 !important;
+        column-gap: 15px !important;
+    }
+
+    /* Prevent awkward splitting of individual news blocks */
     .news-block {
-        page-break-inside: avoid;
-        break-inside: avoid;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .site-header,
+    .newspaper-footer {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+}
+
+/* --- INNER PAGE HEADER --- */
+.inner-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #000;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.inner-header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    justify-content: flex-start;
+}
+
+.inner-header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.inner-header-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.page-number-box {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+}
+
+.inner-logo-text {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #d1121c;
+    /* Red text */
+    text-shadow: 2px 2px 0px #0056b3;
+    /* Blue shadow for RTI effect */
+    letter-spacing: -1px;
+}
+
+.category-pill {
+    background-color: #004d99;
+    /* Deep blue */
+    color: #fff200;
+    /* Yellow text */
+    border: 3px solid #fff200;
+    padding: 8px 30px;
+    border-radius: 50px;
+    font-size: 1.8rem;
+    font-weight: 900;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.date-pill {
+    background-color: #fff200;
+    color: #000;
+    padding: 6px 20px;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.inner-header-right {
+    flex-shrink: 0;
+}
+
+@media print {
+    .inner-page-header {
+        page-break-before: always;
+        break-before: page;
+        padding-top: 20px;
+    }
+}
+
+/* --- E-PAPER SHELL UI --- */
+
+/* 1. White Header Bar */
+.epaper-header-bar {
+    background-color: #ffffff;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    border-bottom: none;
+    /* Flow directly into red nav */
+}
+
+.epaper-logo-container {
+    text-align: center;
+}
+
+.epaper-header-logo {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #b31481;
+    padding: 10px 30px;
+    border-radius: 4px;
+    border: 3px solid #8c0c63;
+}
+
+.logo-main.shadow-text {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 2px 2px 0px #333, -1px -1px 0px #333, 1px -1px 0px #333, -1px 1px 0px #333;
+    line-height: 1;
+    letter-spacing: -2px;
+}
+
+.logo-sub-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+    gap: 15px;
+}
+
+.logo-sub {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.logo-badge {
+    background-color: #fff200;
+    color: #000;
+    font-weight: 900;
+    font-size: 1rem;
+    padding: 2px 10px;
+    clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+/* 2. Red Navigation Bar */
+.epaper-red-nav {
+    background-color: #b30000;
+    width: 100%;
+    /* No margin top or bottom to keep it flush */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 10;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+}
+
+.nav-link {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.nav-link:hover {
+    background-color: #8c0000;
+}
+
+/* 3. Grey Toolbar */
+.epaper-grey-toolbar {
+    background-color: #f8f9fa;
+    width: 100%;
+    border-bottom: 1px solid #dee2e6;
+    padding: 8px 0;
+    z-index: 9;
+}
+
+/* We use a container to align toolbar content within a max-width */
+.epaper-grey-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.toolbar-left,
+.toolbar-right,
+.toolbar-center {
+    display: flex;
+    align-items: center;
+}
+
+.toolbar-center {
+    flex-grow: 1;
+    justify-content: flex-end;
+    padding-right: 15px;
+}
+
+.toolbar-select {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: 1px solid #ced4da;
+    border-radius: 4px 0 0 4px;
+    /* Flush with next button */
+    outline: none;
+    height: 38px;
+    /* Standardize height */
+    box-sizing: border-box;
+}
+
+.toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+    height: 38px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+.btn-next {
+    background-color: #fff;
+    border-color: #ced4da;
+    border-left: none;
+    /* Flush */
+    border-radius: 0 4px 4px 0;
+    color: #495057;
+}
+
+.btn-next:hover {
+    background-color: #e2e6ea;
+}
+
+.btn-pdf {
+    background: #e41e26 !important; /* Red */
+    border-color: #e41e26 !important;
+    color: #fff !important;
+    border-radius: 2px !important;
+    font-weight: bold;
+    box-shadow: none !important;
+}
+
+.btn-pdf:hover {
+    background: #c82333 !important;
+}
+
+/* Flush Button Group for Clip/Archive */
+.btn-group-flush {
+    display: inline-flex;
+}
+
+.btn-group-flush .toolbar-btn {
+    border-radius: 0;
+}
+
+.btn-group-flush .toolbar-btn:first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+.btn-group-flush .toolbar-btn:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.btn-clip {
+    background: #00adef !important; /* Info blue */
+    border-color: #00adef !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.btn-clip:hover {
+    background: #138496 !important;
+}
+
+.btn-archive {
+    background: #49803d !important; /* Success green */
+    border-color: #49803d !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.btn-archive:hover {
+    background: #218838 !important;
+}
+
+.icon-inline {
+    margin-right: 5px;
+}
+
+/* 4. Main Container & Sidebar */
+.epaper-main-container {
+    display: flex;
+    flex-grow: 1;
+    background-color: #f2f2f2;
+    overflow: hidden;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.epaper-sidebar {
+    width: 160px;
+    background-color: #fff;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    flex-shrink: 0;
+    padding: 15px;
+}
+
+.sidebar-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.thumbnail-wrapper {
+    text-align: center;
+}
+
+.epaper-thumbnail {
+    background: #fff;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    height: 140px;
+    /* Force ratio */
+    position: relative;
+    overflow: hidden;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.epaper-thumbnail.active {
+    border: 3px solid #b30000;
+}
+
+.epaper-thumbnail:hover {
+    border-color: #888;
+}
+
+/* Miniature paper visualization */
+.thumb-placeholder-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.thumb-header-red {
+    height: 15%;
+    background-color: #b31481;
+    border: none;
+    margin-bottom: 5px;
+}
+
+.thumb-cols {
+    display: flex;
+    gap: 2px;
+    flex-grow: 1;
+}
+
+.thumb-col {
+    flex: 1;
+    background-color: #e0e0e0;
+}
+
+.thumbnail-label {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #333;
+    font-family: Arial, sans-serif;
+}
+
+/* 5. Main Content Area & Title Bar */
+.epaper-content-area {
+    flex-grow: 1;
+    overflow: auto; /* Allow both vertical and horizontal scrolling */
+    padding: 20px;
+    background-color: #f2f2f2;
+}
+
+.epaper-page-title-bar {
+    background-color: #fff;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.epaper-page-title {
+    margin: 0;
+    font-size: 22px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    font-weight: normal;
+    border-bottom: 2px solid #d1121c; /* Thick red underline */
+    display: inline-block;
+    padding-bottom: 4px;
+}
+
+.title-underline {
+    display: none;
+}
+
+/* Reusing flush group for download/share */
+.btn-download-blue {
+    background: #00adef !important; /* Primary blue */
+    border-color: #00adef !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    border-radius: 2px !important;
+}
+
+.btn-download-blue:hover {
+    background: #007bff !important;
+}
+
+.btn-share-green {
+    background: #49803d !important; /* Success green */
+    border-color: #49803d !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    border-radius: 2px !important;
+}
+
+.btn-share-green:hover {
+    background: #28a745 !important;
+}
+
+
+/* The actual newspaper container */
+.epaper-print-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Zoom Modal */
+.article-zoom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.zoom-modal-content {
+    background: white;
+    width: 95%;
+    max-width: 900px;
+    max-height: 95vh;
+    overflow-y: auto;
+    padding: 40px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+}
+
+.zoom-modal-content .news-block {
+    cursor: default;
+    border: none;
+    padding: 0;
+}
+
+.zoom-modal-content .news-block:hover {
+    background: transparent;
+}
+
+.zoom-modal-content .article-title {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.zoom-modal-content .article-content {
+    font-size: 1.4rem;
+    line-height: 1.6;
+}
+
+.zoom-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+}
+
+.zoom-close-btn:hover {
+    background: #c0392b;
+}
+
+@media print {
+    .newspaper-viewer-bg {
+        height: auto;
+        overflow: visible;
+        display: block;
+    }
+
+    .epaper-main-container,
+    .epaper-content-area {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 }
