@@ -12,24 +12,25 @@
 }
 
 .newspaper-page {
-    /* Exact A3 proportions, but allow responsive scaling */
+    /* Exact A3 proportions, strictly enforced 297x420 aspect ratio */
     width: 100%;
-    min-height: 1587px;
-    height: max-content;
-    /* Allow page to grow rather than crop content */
-    max-width: 1123px;
-    margin: 0 auto 40px auto;
-    /* Gap between pages */
-    padding: 30px;
-    box-sizing: border-box;
-    /* Internal margin so content doesn't touch the very edge */
-    background-color: #fff;
-    color: #000;
-    font-family: 'Tiro Telugu', serif;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    /* Physical page shadow effect */
+    max-width: 1123px; /* Actual A3 pixel width at ~96dpi */
+    height: 1587px;    /* Actual A3 pixel height */
+    max-height: 1587px; /* Prevent long text stretching the page into a scroll */
+    overflow: hidden;   /* Container must clip to preserve print dimensions */
+    
+    /* Flexbox layout to guarantee header/footer remain locked in place */
     display: flex;
     flex-direction: column;
+    
+    margin: 0 auto 40px auto;
+    /* Gap between pages */
+    padding: 20px 30px; /* Reduced vertical padding slightly to give content more room */
+    background-color: #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+    color: #000;
+    font-family: 'Tiro Telugu', serif;
 }
 
 
@@ -39,18 +40,17 @@
 
 .logo-section {
     display: flex;
-    gap: 15px;
     margin-bottom: 5px;
 }
 
 /* The Main Purple/Magenta Banner */
 .main-logo-box {
-    flex: 4;
+    flex: 65;
     background-color: #b31481;
     /* Precise magenta from screenshot */
     border: 3px solid #8c0c63;
     border-radius: 4px;
-    padding: 15px 30px;
+    padding: 5px 20px; /* Minimal vertical padding */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -76,8 +76,8 @@
 }
 
 .header-top-ad {
-    margin-bottom: 20px;
-    padding: 10px;
+    margin-bottom: 5px;
+    padding: 5px;
 }
 
 .main-logo-wrapper {
@@ -88,13 +88,13 @@
 }
 
 .main-logo-text {
-    font-size: 7.5rem;
+    font-size: 6rem; /* Scaled down slightly to decrease vertical footprint */
     font-weight: 900;
     color: #fff;
     text-shadow: 4px 4px 0px #222, -2px -2px 0px #222, 2px -2px 0px #222, -2px 2px 0px #222;
-    line-height: 0.85;
+    line-height: 0.8;
     letter-spacing: -2px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     white-space: nowrap; /* Prevent wrapping which causes vertical cutoff */
     padding-right: 20px; /* Give the last character some breathing room */
 }
@@ -108,7 +108,7 @@
 
 .telugu-daily {
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: bold;
     letter-spacing: 1px;
     position: absolute;
@@ -120,8 +120,8 @@
     background-color: #fff200;
     color: #000;
     font-weight: 900;
-    font-size: 1.8rem;
-    padding: 5px 20px 5px 30px;
+    font-size: 1.4rem;
+    padding: 3px 15px 3px 25px;
     clip-path: polygon(15px 0, 100% 0, 100% 100%, 15px 100%, 0 50%);
     position: absolute;
     bottom: 5px;
@@ -131,7 +131,7 @@
 
 /* The Wanted Reporters Sidebar */
 .side-contact-box {
-    flex: 1.2;
+    flex: 35;
     border: 4px solid #b31481;
     background: #fff;
     display: flex;
@@ -144,15 +144,15 @@
 .wanted-heading {
     background: #555;
     color: #fff;
-    font-size: 1.6rem;
+    font-size: 1rem;
     font-weight: bold;
-    padding: 5px 0;
+    padding: 2px 0;
 }
 
 .side-logo-title {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 900;
-    padding: 10px 5px;
+    padding: 4px 2px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -166,20 +166,20 @@
 .side-express {
     background: #d1121c;
     color: #fff;
-    margin-left: 10px;
-    padding: 2px 10px;
+    margin-left: 5px;
+    padding: 1px 5px;
     border-radius: 4px;
-    font-size: 1.8rem;
+    font-size: 1rem;
 }
 
 .contact-details {
-    font-size: 0.95rem;
-    padding: 0 15px;
-    text-align: justify;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    text-align: center; /* Avoids clumsy stretching of justified text */
     flex-grow: 1;
     font-weight: bold;
-    color: #333;
-    line-height: 1.4;
+    color: #444;
+    line-height: 1.3;
 }
 
 .contact-number-box {
@@ -193,11 +193,11 @@
 
 .contact-number {
     color: #d1121c;
-    font-size: 2.8rem;
+    font-size: 1.6rem;
     font-weight: 900;
     line-height: 1;
-    padding-bottom: 5px;
-    letter-spacing: 2px;
+    padding-bottom: 2px;
+    letter-spacing: 0px;
 }
 
 /* Green Information Bar */
@@ -216,6 +216,10 @@
 .newspaper-content {
     background: #fff;
     margin-top: 10px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    /* Removed overflow: hidden so content doesn't abruptly truncate */
 }
 
 /* Page Visibility States */
@@ -273,52 +277,46 @@
     padding-top: 15px;
 }
 
-/* Dynamic News Grid Layout (replaces masonry) */
-.dynamic-news-grid {
+/* Gapless Dense Grid Layout (Max 3 Columns) */
+.dynamic-news-masonry {
     display: grid;
-    /* We always define exactly 5 columns of equal width for the mathematical grid */
-    grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: 20px; /* Base unit for deterministic CSS masonry spans */
-    grid-auto-flow: dense; /* The layout engine secret for minimizing whitespace */
-    gap: 10px; /* Tightly pack elements */
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: dense; /* Fill gaps using smaller articles */
+    gap: 0px; /* Force articles to attach perfectly as requested */
     width: 100%;
+    align-items: start;
+    flex-grow: 1; /* Allow the grid to take up requested space */
+    margin-bottom: 20px; /* Force breathing room above footer */
 }
 
-/* Base article block */
-.news-block {
-    background-color: #fff;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    break-inside: avoid;
-    /* Fallback bottom line */
-    border-bottom: 2px solid #ccc; 
-    box-sizing: border-box;
-    height: 100%; /* Important for grid stretching */
-}
-
-/* Article Sizing Spans
-   Based on a 5-column grid:
-    small:    1 col  (side news, briefs)
-    medium:   2 cols (standard articles)
-    large:    3 cols (secondary features)
-    feature:  5 cols (massive banner news, rare)
-*/
-.news-block.small {
+/* Variable Column Widths based on Character Counts */
+.col-span-1 {
     grid-column: span 1;
 }
 
-.news-block.medium {
+.col-span-2 {
     grid-column: span 2;
 }
 
-.news-block.feature {
-    grid-column: span 3;
+.col-span-3 {
+    grid-column: 1 / -1; /* Spans all available columns */
 }
 
-.news-block.banner {
-    grid-column: 1 / -1; /* spans all 5 columns */
-    border-bottom: 4px solid #000;
+.news-masonry-item {
+    display: block; 
+    width: 100%;
+}
+
+/* Base article block styling */
+.news-block {
+    background-color: transparent; /* better for spilling text */
+    padding: 0;
+    display: block; /* Removed flex column to allow raw text splitting */
+    border: none; /* Removed border to allow seamless flow */
+    border-top: 2px solid #333; /* Added top border to delineate start of new articles */
+    padding-top: 10px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 /* Advertisement Block */
@@ -445,28 +443,42 @@
     margin-bottom: 4px;
 }
 
+/* Prevent headlines and images from being sliced in half horizontally by CSS columns */
+.article-header-group,
+.article-meta-row,
+.article-image-container,
+.inline-category-tag {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
 /* Image Layout Configurations */
 .layout-stacked {
-    display: flex;
-    flex-direction: column;
+    display: block;
 }
 
 .layout-side-image {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    align-items: flex-start;
+    display: block;
 }
 
 .layout-side-image .article-image-container {
     width: 45%;
-    flex-shrink: 0;
-    margin-bottom: 0;
+    float: left;
+    margin-right: 12px;
+    margin-bottom: 5px;
+}
+
+.news-masonry-item.col-span-3 .layout-side-image .article-image-container {
+    width: 25%; /* Roughly 1 column worth of width inside a 3-column span */
+}
+
+.news-masonry-item.col-span-2 .layout-side-image .article-image-container {
+    width: 35%; /* Halfway side for a 2-column wide block */
 }
 
 .layout-side-image .article-content {
-    width: 55%;
-    margin-top: 0;
+    /* No defined width, allowing it to natively wrap around the floated image */
+    display: inline;
 }
 
 .article-image-container {
@@ -491,6 +503,9 @@
     word-spacing: normal;
     font-family: 'Tiro Telugu', 'Georgia', serif;
     margin-top: 4px;
+    /* allow the flex column item to take up remaining height, growing bounds of container */
+    flex-grow: 1; 
+    overflow: visible; 
 }
 
 .inline-category-tag {
@@ -554,6 +569,10 @@
     .layout-masonry-regional, .layout-masonry-announcements, .layout-masonry-editorial, .layout-masonry-standard  {
         column-count: 3;
     }
+    
+    .dynamic-news-masonry {
+        column-count: 3;
+    }
 
     .center-category-banner {
         font-size: 1.5rem;
@@ -562,6 +581,11 @@
 
 @media (max-width: 640px) {
     .layout-masonry-regional, .layout-masonry-announcements, .layout-masonry-editorial, .layout-masonry-standard, .news-masonry-layout {
+        column-count: 1;
+        column-rule: none;
+    }
+    
+    .dynamic-news-masonry {
         column-count: 1;
         column-rule: none;
     }
@@ -655,8 +679,8 @@
 
     /* Ensure masonry remains consistent with JS packing which expects 4 columns */
     .news-masonry-layout {
-        column-count: 4 !important;
-        column-gap: 15px !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 15px !important;
     }
 
     /* Prevent awkward splitting of individual news blocks */
@@ -770,9 +794,22 @@
     /* Flow directly into red nav */
 }
 
+.epaper-logo-cont.article-card {
+    border: 1px solid #333; /* Make borders slightly darker so when attached they look like one strong separator */
+    padding: 10px; /* Inner padding pushed inside the border so text doesn't touch edges */
+    margin: 0;     /* Absolutely no exterior margins to force boxes to touch */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: transparent;
+    box-sizing: border-box; /* Crucial: Keeps padding inside the physical width */
+}
+
 .epaper-logo-container {
     text-align: center;
 }
+
 
 .epaper-header-logo {
     display: inline-flex;

@@ -1,36 +1,12 @@
 import React from 'react';
 import ArticleCard from './ArticleCard';
 
-// 5-Column Grid Layout Templates (Using exact terminology: banner=5, feature=3, medium=2, small=1)
-// These templates define the visual hierarchy and size distribution of a page.
-// The CSS `grid-auto-flow: dense` handles the actual "Tetris-like" physical placement.
-export const PAGE_PATTERNS = [
-    // 1. Top Heavy Classic (~24 articles)
-    ['banner', 'feature', 'medium', 'medium', 'small', 'medium', 'small', 'small', 'small', 'small', 'small', 'feature', 'small', 'small', 'medium', 'medium', 'small', 'small', 'feature', 'small', 'medium', 'small', 'small', 'small'],
-    // 2. Magazine Style Base (~26 articles)
-    ['medium', 'feature', 'small', 'small', 'small', 'small', 'small', 'medium', 'medium', 'small', 'feature', 'medium', 'small', 'small', 'feature', 'medium', 'small', 'medium', 'small', 'small', 'small', 'small', 'small', 'banner', 'small', 'small'],
-    // 3. Balanced Mix (~24 articles)
-    ['feature', 'small', 'small', 'small', 'feature', 'small', 'medium', 'medium', 'small', 'medium', 'small', 'medium', 'small', 'small', 'small', 'small', 'small', 'feature', 'medium', 'medium', 'feature', 'small', 'medium', 'medium'],
-    // 4. Briefs Heavy Bottom (~25 articles)
-    ['banner', 'medium', 'feature', 'feature', 'medium', 'medium', 'medium', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small'],
-    // 5. Features Mixed (~18 articles)
-    ['feature', 'medium', 'medium', 'feature', 'feature', 'small', 'small', 'small', 'small', 'feature', 'medium', 'medium', 'small', 'small', 'medium', 'medium', 'banner', 'small'],
-    // 6. News Dense (~28 articles)
-    ['medium', 'medium', 'small', 'medium', 'small', 'medium', 'small', 'medium', 'medium', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'medium', 'medium', 'small', 'medium', 'small', 'medium', 'feature', 'medium', 'small'],
-    // 7. Sidebar Heavy (~20 articles)
-    ['medium', 'feature', 'medium', 'small', 'small', 'small', 'medium', 'feature', 'medium', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'small', 'banner', 'medium', 'small'],
-    // 8. Even Distribution (~25 articles)
-    ['feature', 'medium', 'medium', 'medium', 'small', 'small', 'small', 'small', 'small', 'small', 'feature', 'small', 'small', 'small', 'medium', 'medium', 'medium', 'small', 'medium', 'small', 'feature', 'small', 'banner', 'small', 'small'],
-];
-
-const LayoutEngine = ({ articles, pageIndex, overridePattern, onArticleClick }) => {
+// Real CSS Masonry Algorithm 
+// This container relies on CSS `column-count: 4` to pour text continuously downwards.
+// It mathematically guarantees 0 gaps because blocks simply stack on top of the previous one in that column.
+const LayoutEngine = ({ articles, pageIndex, onArticleClick }) => {
     
-    // Pick the pattern
-    const pattern = overridePattern || PAGE_PATTERNS[(pageIndex - 1) % PAGE_PATTERNS.length];
-
     // Priority Ranking Sorting Algorithm
-    // The user requested: "Implement article priority ranking"
-    // We sort the articles so the most important pieces land in the 'banner' and 'feature' slots that appear first in templates.
     const prioritySortedArticles = [...articles].sort((a, b) => {
         // Categories like 'Lead' get highest priority
         const aIsLead = a.category === 'Lead' || a.category === 'ముఖ్య వార్తలు';
@@ -49,31 +25,128 @@ const LayoutEngine = ({ articles, pageIndex, overridePattern, onArticleClick }) 
         return (bLength + bBoost) - (aLength + aBoost);
     });
 
+    // --- Deterministic Grid Row Packer ---
+    // CSS grid-auto-flow: dense relies on items magically fitting.
+    // If we have mostly col-span-2 articles, they will leave empty col-span-1 gaps on the right.
+    // This algorithm actively reprioritizes array items to forcibly plug gaps, 
+    // or manually widens items to absorb empty space.
+    const packedArticles = [];
+    let unplaced = [...prioritySortedArticles];
+    let rowSlotsRemaining = 3;
+
+    while (unplaced.length > 0) {
+        // Try to find the highest priority article that can physically fit in the remaining row slots
+        let nextIndex = unplaced.findIndex(article => {
+            const charCount = article.content ? article.content.length : 0;
+            // Determine its naturally desired span based on user rules
+            let desiredSpan = 1;
+            if (charCount > 1200) desiredSpan = 3;
+            else if (charCount > 600) desiredSpan = 2;
+            
+            // First item on Page 1 is hardcoded to span 3
+            if (packedArticles.length === 0 && pageIndex === 1) desiredSpan = 3;
+
+            return desiredSpan <= rowSlotsRemaining;
+        });
+
+        // Oh no! No remaining article can naturally fit in the remaining slot(s).
+        // e.g., we have 1 slot left, but all unplaced articles are 600+ chars (Span 2 or 3).
+        if (nextIndex === -1) {
+            // We have a gap that cannot be filled natively.
+            // SOLUTION: Force the *next highest priority* article to shrink to fit the gap,
+            // OR if the next article is huge, let it start a new row and force the *previous*
+            // article in the current row to EXPAND to absorb the gap.
+            
+            const prevPlacedArticle = packedArticles[packedArticles.length - 1];
+            
+            if (prevPlacedArticle && rowSlotsRemaining < 3) {
+                // Expand the LAST PLACED article to absorb the remaining slots so the row is perfectly flush
+                prevPlacedArticle.forcedSpan += rowSlotsRemaining;
+                // Reset row to start fresh for the next big articles
+                rowSlotsRemaining = 3;
+                continue; 
+            } else {
+                 // Safety fallback: just take the next one and forcefully shrink it to fit
+                 nextIndex = 0;
+            }
+        }
+
+        // Pluck the selected article out of the unplaced queue
+        const articleToPlace = unplaced.splice(nextIndex, 1)[0];
+        
+        // Calculate its actual active span
+        const charCount = articleToPlace.content ? articleToPlace.content.length : 0;
+        let actualSpan = 1;
+        let contentCols = 1;
+        
+        if (packedArticles.length === 0 && pageIndex === 1) {
+             actualSpan = 3;
+             contentCols = 3;
+        } else if (charCount > 1200) {
+             actualSpan = 3;
+             contentCols = 3;
+        } else if (charCount > 600) {
+             actualSpan = 2;
+             contentCols = 2;
+        }
+
+        // Apply fallback truncation if we forcefully shoved a big article into a small slot
+        if (actualSpan > rowSlotsRemaining) {
+            actualSpan = rowSlotsRemaining;
+            contentCols = rowSlotsRemaining;
+        }
+
+        packedArticles.push({
+            originalArticle: articleToPlace,
+            forcedSpan: actualSpan,
+            contentCols: contentCols
+        });
+
+        // Deduct from row capacity
+        rowSlotsRemaining -= actualSpan;
+        if (rowSlotsRemaining <= 0) {
+            rowSlotsRemaining = 3; // Reset for next row
+        }
+    }
+
     return (
-        <div className="dynamic-news-grid">
-            {prioritySortedArticles.map((article, idx) => {
-                const assignedShape = pattern[idx % pattern.length];
+        <div className="dynamic-news-masonry">
+            {packedArticles.map((packedData, idx) => {
+                const article = packedData.originalArticle;
+                const activeSpan = packedData.forcedSpan;
+                const activeCols = packedData.contentCols;
+                
                 const bgClass = idx % 2 === 0 ? 'bg-light-gray' : 'bg-white';
                 
-                // Colorize titles randomly for variety based on column width
                 let titleClass = "";
-                if (assignedShape === 'banner') titleClass = "title-bg-red";
-                else if (assignedShape === 'feature') titleClass = "title-bg-blue";
+                let isSideImage = false;
+                let spanClass = `col-span-${activeSpan}`;
 
-                // Layout variations
-                // Medium/feature elements sometimes look good with side images if text is long enough
-                const isSideImage = (assignedShape === 'feature' || assignedShape === 'banner') && article.content && article.content.length > 200;
+                // Apply coloring based on original rules, plus image checks
+                const charCount = article.content ? article.content.length : 0;
+                
+                if (idx === 0 && pageIndex === 1) {
+                    titleClass = 'title-bg-red';
+                    isSideImage = true;
+                } else if (charCount > 1200) {
+                    titleClass = 'title-bg-blue';
+                    if (article.image_url) isSideImage = true;
+                } else if (charCount > 600) {
+                    titleClass = 'title-bg-green';
+                    if (article.image_url) isSideImage = true;
+                }
 
                 return (
-                    <ArticleCard 
-                        key={`${article.id}-${pageIndex}-${idx}`} 
-                        article={article} 
-                        gridClass={assignedShape} 
-                        bgClass={bgClass} 
-                        titleClass={titleClass}
-                        isSideImage={isSideImage}
-                        onArticleClick={onArticleClick} 
-                    />
+                    <div key={`${article.id}-${pageIndex}-${idx}`} className={`news-masonry-item ${spanClass} mb-4`}>
+                        <ArticleCard 
+                            article={article} 
+                            bgClass={bgClass} 
+                            titleClass={titleClass}
+                            isSideImage={isSideImage}
+                            contentCols={activeCols}
+                            onArticleClick={onArticleClick} 
+                        />
+                    </div>
                 );
             })}
         </div>

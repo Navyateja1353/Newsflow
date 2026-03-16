@@ -1,7 +1,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
-const ArticleCard = ({ article, onArticleClick, gridClass = "medium", bgClass = "bg-white", titleClass = "", isSideImage = false }) => {
+const ArticleCard = ({ article, onArticleClick, gridClass = "medium", bgClass = "bg-white", titleClass = "", isSideImage = false, contentCols = 1 }) => {
     // Clean WhatsApp bold/italic formatting marks from text
     const cleanText = (text) => {
         if (!text) return "";
@@ -54,7 +54,7 @@ const ArticleCard = ({ article, onArticleClick, gridClass = "medium", bgClass = 
 
     return (
         <article 
-            className={`news-block ${gridClass} ${bgClass} cursor-pointer overflow-hidden relative`} 
+            className={`news-block ${gridClass} ${bgClass} cursor-pointer relative`} 
             style={{ gridRowEnd: rowSpan }}
             onClick={() => onArticleClick && onArticleClick(article)} 
             title="Zoom in"
@@ -94,11 +94,17 @@ const ArticleCard = ({ article, onArticleClick, gridClass = "medium", bgClass = 
                 )}
 
                 {/* 3. Text content */}
-                <div className="article-content">
+                <div 
+                    className="article-content"
+                    style={{ 
+                        columnCount: contentCols > 1 ? contentCols : 'auto', 
+                        columnGap: contentCols > 1 ? '20px' : 'normal' 
+                    }}
+                >
                     {article.category && article.category !== 'సాధారణ' && (
                         <span className="inline-category-tag">{article.category}</span>
                     )}
-                    {gridClass === 'banner' || gridClass === 'feature' ? cleanContent : cleanContent.substring(0, 400) + '...'}
+                    {cleanContent}
                 </div>
             </div>
             </div>

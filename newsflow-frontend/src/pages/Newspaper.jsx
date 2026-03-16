@@ -9,7 +9,7 @@ import './Newspaper.css';
 import newspaperSettings from '../config/newspaperSettings';
 import { QRCodeSVG } from 'qrcode.react';
 
-import LayoutEngine, { PAGE_PATTERNS } from '../components/LayoutEngine';
+import LayoutEngine from '../components/LayoutEngine';
 import ArticleCard from '../components/ArticleCard';
 
 const Newspaper = () => {
@@ -38,7 +38,24 @@ const Newspaper = () => {
     const fetchArticles = async () => {
         try {
             const response = await axios.get('/api/public/all-published');
-            setArticles(response.data);
+            
+            // Deduplicate articles based on exactly matching headlines
+            const uniqueArticles = [];
+            const seenHeadlines = new Set();
+            
+            for (const article of response.data) {
+                const normalizedHeadline = (article.headline || article.title || "").trim().toLowerCase();
+                
+                // If it's empty, or we haven't seen this headline yet, add it
+                if (!normalizedHeadline || !seenHeadlines.has(normalizedHeadline)) {
+                    if (normalizedHeadline) {
+                        seenHeadlines.add(normalizedHeadline);
+                    }
+                    uniqueArticles.push(article);
+                }
+            }
+            
+            setArticles(uniqueArticles);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching articles:", err);
@@ -94,8 +111,8 @@ const Newspaper = () => {
     };
 
     // Instead of arbitrary limits, we match exact page volume patterns for absolute physical density.
-    // We keep max 8 pages to prevent memory issues for PDFs
-    const MAX_TOTAL_PAGES = 8;
+    // We allow a large maximum to let long text spread properly into newly generated pages
+    const MAX_TOTAL_PAGES = 50;
     
     const pages = [];
 
@@ -123,74 +140,104 @@ const Newspaper = () => {
         const page1Count = Math.min(5, sortedArticles.length);
         const topFeatured = sortedArticles.slice(0, page1Count);
         
-        // We will loop through the available articles if we run out to guarantee 8 dense pages
+        // We will pull from the available articles without refilling to prevent duplicates
         let pool = [...sortedArticles.slice(page1Count)]; 
         
-        const getArticles = (count) => {
-            let result = [];
-            while (result.length < count) {
-                if (pool.length === 0) pool = [...sortedArticles]; // refill
-                const take = Math.min(pool.length, count - result.length);
-                result = [...result, ...pool.slice(0, take)];
-                pool = pool.slice(take);
+        // Heuristic function to estimate pixel height of an article in a 4-column layout
+        const estimateArticleHeight = (article) => {
+            let height = 0;
+            // Base padding/margins/borders
+            height += 50; 
+            
+            // Headline estimation
+            const headline = article.headline || article.title || "";
+            height += Math.ceil(headline.length / 25) * 30; // approx 30px per line, 25 chars per line
+            
+            // Image estimation
+            if (article.image_url) {
+                height += 200; // approx image height
             }
-            return result;
+            
+            // Content estimation
+            const content = article.content || "";
+            // Assuming about 45 characters fit per line in a 4-col layout, 22px line height
+            height += Math.ceil(content.length / 45) * 22; 
+            
+            return height;
         };
 
-        // Grid items below featured block match Pattern 0 exactly, but overpacked to ensure no whitespace
-        const page1GridItems = getArticles(35);
+        const getArticlesByHeight = (targetHeight) => {
+            const result = [];
+            let currentHeight = 0;
+            
+            while (pool.length > 0 && currentHeight < targetHeight) {
+                const nextArticle = pool[0];
+                const estimatedHeight = estimateArticleHeight(nextArticle);
+                
+                // If adding this article exceeds the target by a large margin (e.g. 300px), 
+                // and we already have at least 1 article, stop here.
+                if (currentHeight + estimatedHeight > targetHeight + 300 && result.length > 0) {
+                    break;
+                }
+                
+                result.push(pool.shift());
+                currentHeight += estimatedHeight;
+            }
+            return { items: result, totalHeight: currentHeight };
+        };
+
+        // Pull articles for front page up to ~1200px total estimated height 
+        // (Page 1 has massive headers/features, so very little vertical masonry space is left)
+        const page1Data = getArticlesByHeight(1200);
+        const page1GridItems = page1Data.items;
 
         pages.push({
             isFrontPage: true,
             topFeatured: topFeatured,
             gridItems: page1GridItems,
-            pattern: PAGE_PATTERNS[0]
         });
 
         // --- INNER PAGES LOGIC ---
-        let innerPageIndex = 1; // Start from pattern index 1
-        
-        // Guarantee exactly 8 pages, packed with 45 articles per page for absolute high physical density
+        // Guarantee enough pages, packed with exactly 5 articles per page for absolute row-wise limitation
         while (pages.length < MAX_TOTAL_PAGES) {
             
-            // Loop sequentially through remaining patterns
-            const currentPattern = PAGE_PATTERNS[innerPageIndex % PAGE_PATTERNS.length];
-            const pageGridItems = getArticles(45);
+            // If we've run out completely, stop making pages to prevent blank grids
+            if (pool.length === 0) break;
+            
+            // Inner pages have ~1400px of vertical room across 3 columns = ~4200px capacity
+            // 3600px provides a safe buffer so trailing characters aren't sliced at the page bottom.
+            const pageData = getArticlesByHeight(3600);
+            const pageGridItems = pageData.items;
 
             pages.push({
                 isFrontPage: false,
                 topFeatured: [],
                 gridItems: pageGridItems,
-                pattern: currentPattern
             });
 
-            innerPageIndex++;
         }
     }
 
-// The component itself inside Newspaper.jsx instead of separate file for easy packaging
 const PaperFooter = ({ pageIndex }) => {
-    // Implement RTI Express Footer Logic "»qs¡˝Ÿ q÷´dt 2,3,5,7,8" continuation styles
-    const continuationText = "»qs¡˝Ÿ q÷´dt 2,3,4,5,6,7,8";
-
     return (
         <footer className="newspaper-footer no-print-break w-full shrink-0">
-            <div className="color-swatch-strip">
-                <div className="swatch" style={{ backgroundColor: '#000000' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#d1121c' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#fff200' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#0056b3' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#008837' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#b31481' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#f26522' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#00a99d' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#8a2be2' }}></div>
-                <div className="swatch" style={{ backgroundColor: '#7f8c8d' }}></div>
-            </div>
             <div className="flex justify-between items-center px-4 mt-2 mb-4">
                 <div className="footer-copyright font-bold text-sm tracking-widest">{newspaperSettings.footerCopyright}</div>
-                <div className="footer-continuation text-md font-bold text-gray-700 telugu-font">{continuationText}</div>
-                <div className="text-right text-xs text-gray-500 font-bold uppercase">C M Y K</div>
+                <div className="flex items-center gap-4">
+                    <div className="text-right text-xs text-gray-500 font-bold uppercase">C M Y K</div>
+                    <div className="flex h-3 w-64 border border-gray-300">
+                        <div className="flex-1" style={{ backgroundColor: '#000000' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#d1121c' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#fff200' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#0056b3' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#008837' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#b31481' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#f26522' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#00a99d' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#8a2be2' }}></div>
+                        <div className="flex-1" style={{ backgroundColor: '#7f8c8d' }}></div>
+                    </div>
+                </div>
             </div>
         </footer>
     );
@@ -437,7 +484,7 @@ const PaperFooter = ({ pageIndex }) => {
                                                 </div>
 
                                                 {/* Packed Grid Box underneath the magazine layout using new LayoutEngine algorithm */}
-                                                <LayoutEngine articles={pageData.gridItems || []} pageIndex={1} overridePattern={pageData.pattern} onArticleClick={setZoomedArticle} />
+                                                <LayoutEngine articles={pageData.gridItems || []} pageIndex={1} onArticleClick={setZoomedArticle} />
 
                                                 {/* Push an Ad to the bottom if there is significant leftover space */}
                                                 {pageData.adHeight > 0 && (
@@ -474,7 +521,7 @@ const PaperFooter = ({ pageIndex }) => {
 
                                                     {/* Delegate rendering of Grid to Layout Engine */}
                                                     <div className="flex-grow">
-                                                        <LayoutEngine articles={pageData.gridItems || []} pageIndex={pageIndex + 1} overridePattern={pageData.pattern} onArticleClick={setZoomedArticle} />
+                                                        <LayoutEngine articles={pageData.gridItems || []} pageIndex={pageIndex + 1} onArticleClick={setZoomedArticle} />
                                                     </div>
 
                                                     {/* Page 8 Publisher Block Element */}
