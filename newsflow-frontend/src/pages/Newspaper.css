@@ -15,7 +15,7 @@
     /* Exact A3 proportions, strictly enforced 297x420 aspect ratio */
     width: 100%;
     max-width: 1123px; /* Actual A3 pixel width at ~96dpi */
-    height: 1587px;    /* Actual A3 pixel height */
+    height: 1587px;    /* window A3 pixel height */
     max-height: 1587px; /* Prevent long text stretching the page into a scroll */
     overflow: hidden;   /* Container must clip to preserve print dimensions */
     
@@ -219,7 +219,7 @@
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    /* Removed overflow: hidden so content doesn't abruptly truncate */
+    overflow: hidden; /* Prevent content from spilling out of bounds */
 }
 
 /* Page Visibility States */
@@ -279,32 +279,26 @@
 
 /* Gapless Dense Grid Layout (Max 3 Columns) */
 .dynamic-news-masonry {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-flow: dense; /* Fill gaps using smaller articles */
-    gap: 0px; /* Force articles to attach perfectly as requested */
+    display: block; 
+    column-count: 3;
+    column-gap: 15px;
+    /* Default is column-fill: balance, which ensures the 3 columns are of equal height */
     width: 100%;
-    align-items: start;
-    flex-grow: 1; /* Allow the grid to take up requested space */
-    margin-bottom: 20px; /* Force breathing room above footer */
+    margin-bottom: 20px;
 }
 
 /* Variable Column Widths based on Character Counts */
-.col-span-1 {
-    grid-column: span 1;
-}
-
-.col-span-2 {
-    grid-column: span 2;
-}
+/* Note: col-span-1 and col-span-2 are not directly supported smoothly in CSS columns, so they flow normally */
 
 .col-span-3 {
-    grid-column: 1 / -1; /* Spans all available columns */
+    column-span: all; /* Spans across all 3 columns natively */
 }
 
 .news-masonry-item {
     display: block; 
     width: 100%;
+    margin-bottom: 15px; 
+    /* We DO NOT put break-inside: avoid here, so the article text CAN flow continuously, creating flat column bottoms */
 }
 
 /* Base article block styling */
@@ -317,6 +311,16 @@
     padding-top: 10px;
     box-sizing: border-box;
     width: 100%;
+}
+
+.news-block h2, .news-block h3, .news-block h4 {
+    break-inside: avoid; /* Don't slice headlines in half! */
+    page-break-inside: avoid;
+}
+
+.news-block .article-image-container {
+    break-inside: avoid; /* Don't slice images in half! */
+    page-break-inside: avoid;
 }
 
 /* Advertisement Block */
@@ -794,6 +798,22 @@
     /* Flow directly into red nav */
 }
 
+.epaper-content-area {
+    padding: 20px 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.epaper-print-container {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the A3 pages */
+}
 .epaper-logo-cont.article-card {
     border: 1px solid #333; /* Make borders slightly darker so when attached they look like one strong separator */
     padding: 10px; /* Inner padding pushed inside the border so text doesn't touch edges */

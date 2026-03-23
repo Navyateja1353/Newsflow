@@ -110,9 +110,8 @@ const Newspaper = () => {
         }
     };
 
-    // Instead of arbitrary limits, we match exact page volume patterns for absolute physical density.
-    // We allow a large maximum to let long text spread properly into newly generated pages
-    const MAX_TOTAL_PAGES = 50;
+    // Limit the maximum number of pages generated to match standard physical newspapers (8-12 pages)
+    const MAX_TOTAL_PAGES = 10;
     
     const pages = [];
 
@@ -143,24 +142,25 @@ const Newspaper = () => {
         // We will pull from the available articles without refilling to prevent duplicates
         let pool = [...sortedArticles.slice(page1Count)]; 
         
-        // Heuristic function to estimate pixel height of an article in a 4-column layout
+        // Heuristic function to estimate pixel height of an article (Linear 1-column height equivalent)
         const estimateArticleHeight = (article) => {
             let height = 0;
-            // Base padding/margins/borders
+            // Base padding/borders plus title margins
             height += 50; 
             
             // Headline estimation
             const headline = article.headline || article.title || "";
-            height += Math.ceil(headline.length / 25) * 30; // approx 30px per line, 25 chars per line
+            height += Math.ceil(headline.length / 30) * 28; 
             
             // Image estimation
             if (article.image_url) {
-                height += 200; // approx image height
+                height += 220; // Tighter image height
             }
             
             // Content estimation
             const content = article.content || "";
-            // Assuming about 45 characters fit per line in a 4-col layout, 22px line height
+            // In a 3-column layout, Telugu text is actually quite dense.
+            // Using a realistic physical width of 45 characters per line to force dense packing.
             height += Math.ceil(content.length / 45) * 22; 
             
             return height;
@@ -170,51 +170,77 @@ const Newspaper = () => {
             const result = [];
             let currentHeight = 0;
             
-            while (pool.length > 0 && currentHeight < targetHeight) {
-                const nextArticle = pool[0];
-                const estimatedHeight = estimateArticleHeight(nextArticle);
+            let i = 0;
+            while (i < pool.length && currentHeight < targetHeight) {
+                const article = pool[i];
+                const estimatedHeight = estimateArticleHeight(article);
                 
-                // If adding this article exceeds the target by a large margin (e.g. 300px), 
-                // and we already have at least 1 article, stop here.
-                if (currentHeight + estimatedHeight > targetHeight + 300 && result.length > 0) {
-                    break;
+                // Allow a small 150px overflow buffer so we don't get stuck with 
+                // tiny unfillable spaces, taking advantage of CSS flex-grow to absorb differences.
+                if (currentHeight + estimatedHeight <= targetHeight + 150) {
+                    result.push(article);
+                    currentHeight += estimatedHeight;
+                    pool.splice(i, 1); // remove from pool
+                    // Do NOT increment i, because the array shifted left
+                } else {
+                    // This article is too big for the remaining space.
+                    // Skip it and look for a smaller one further down the pool that WILL fit.
+                    i++;
                 }
-                
-                result.push(pool.shift());
-                currentHeight += estimatedHeight;
             }
-            return { items: result, totalHeight: currentHeight };
+            
+            // Safety fallback: If this page couldn't fit a SINGLE article (because all remaining 
+            // articles in the pool are individually larger than the entire page), 
+            // force push the first one so we don't end up in an infinite loop printing blank pages.
+            if (result.length === 0 && pool.length > 0) {
+                const article = pool.shift();
+                result.push(article);
+                currentHeight += estimateArticleHeight(article);
+            }
+            
+            return { items: result, totalHeight: currentHeight, remaining: Math.max(0, targetHeight - currentHeight) };
         };
 
-        // Pull articles for front page up to ~1200px total estimated height 
-        // (Page 1 has massive headers/features, so very little vertical masonry space is left)
-        const page1Data = getArticlesByHeight(1200);
+        // Page 1 has massive headers/features, remaining masonry space is ~650px height.
+        // 650px * 3 columns = 1950px total vertical capacity for 1/3 width articles.
+        const page1Data = getArticlesByHeight(2200);
         const page1GridItems = page1Data.items;
 
         pages.push({
             isFrontPage: true,
             topFeatured: topFeatured,
             gridItems: page1GridItems,
+            adHeight: 0 // Rely on CSS flex-grow instead of static height
         });
 
-        // --- INNER PAGES LOGIC ---
-        // Guarantee enough pages, packed with exactly 5 articles per page for absolute row-wise limitation
-        while (pages.length < MAX_TOTAL_PAGES) {
+        // Guarantee enough pages to display all content without exceeding MAX_TOTAL_PAGES
+        while (pages.length < MAX_TOTAL_PAGES && pool.length > 0) {
             
-            // If we've run out completely, stop making pages to prevent blank grids
-            if (pool.length === 0) break;
-            
-            // Inner pages have ~1400px of vertical room across 3 columns = ~4200px capacity
-            // 3600px provides a safe buffer so trailing characters aren't sliced at the page bottom.
-            const pageData = getArticlesByHeight(3600);
-            const pageGridItems = pageData.items;
+            if (pages.length === MAX_TOTAL_PAGES - 1) {
+                // This is the absolute final page allowed!
+                // We MUST dump all remaining articles here so nothing is dropped.
+                // The CSS column layout will just stretch to fit them all.
+                pages.push({
+                    isFrontPage: false,
+                    topFeatured: [],
+                    gridItems: [...pool],
+                    adHeight: 0 // Rely on CSS flex-grow
+                });
+                pool = []; // Empty the pool so the loop terminales
+            } else {
+                // Inner pages have ~1350px of vertical room. 
+                // 3 columns of 1350px = 4050px total capacity of 1/3 width articles.
+                // Target 5500px to forcefully overstuff the columns and rely on flex-wrap downwards flow.
+                const pageData = getArticlesByHeight(5500);
+                const pageGridItems = pageData.items;
 
-            pages.push({
-                isFrontPage: false,
-                topFeatured: [],
-                gridItems: pageGridItems,
-            });
-
+                pages.push({
+                    isFrontPage: false,
+                    topFeatured: [],
+                    gridItems: pageGridItems,
+                    adHeight: 0 // Rely on CSS flex-grow
+                });
+            }
         }
     }
 
@@ -224,18 +250,57 @@ const PaperFooter = ({ pageIndex }) => {
             <div className="flex justify-between items-center px-4 mt-2 mb-4">
                 <div className="footer-copyright font-bold text-sm tracking-widest">{newspaperSettings.footerCopyright}</div>
                 <div className="flex items-center gap-4">
-                    <div className="text-right text-xs text-gray-500 font-bold uppercase">C M Y K</div>
-                    <div className="flex h-3 w-64 border border-gray-300">
-                        <div className="flex-1" style={{ backgroundColor: '#000000' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#d1121c' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#fff200' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#0056b3' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#008837' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#b31481' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#f26522' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#00a99d' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#8a2be2' }}></div>
-                        <div className="flex-1" style={{ backgroundColor: '#7f8c8d' }}></div>
+                    <div className="flex h-4 items-center gap-12">
+                        {/* Cluster 1: CMYK + Light Blue */}
+                        <div className="flex gap-0 h-4">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#80d2ef' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                        </div>
+                        {/* Grayscale 1 */}
+                        <div className="flex gap-0 h-4 rounded-full overflow-hidden">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                        </div>
+
+                        {/* Cluster 2: CMYK + Pink */}
+                        <div className="flex gap-0 h-4">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#f596c5' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                        </div>
+                        {/* Grayscale 2 */}
+                        <div className="flex gap-0 h-4 rounded-full overflow-hidden">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                        </div>
+
+                        {/* Cluster 3: CMYK + Light Yellow */}
+                        <div className="flex gap-0 h-4">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#fff999' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                        </div>
+                        {/* Grayscale 3 */}
+                        <div className="flex gap-0 h-4 rounded-full overflow-hidden">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                        </div>
+
+                        {/* Cluster 4: Basic CMYK + Grey */}
+                        <div className="flex gap-0 h-4">
+                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -483,15 +548,13 @@ const PaperFooter = ({ pageIndex }) => {
                                                     )}
                                                 </div>
 
-                                                {/* Packed Grid Box underneath the magazine layout using new LayoutEngine algorithm */}
+                                                {/* Packed Grid Box underneath the magazine layout using new CSS Column algorithm */}
                                                 <LayoutEngine articles={pageData.gridItems || []} pageIndex={1} onArticleClick={setZoomedArticle} />
 
-                                                {/* Push an Ad to the bottom if there is significant leftover space */}
-                                                {pageData.adHeight > 0 && (
-                                                    <div className="advertisement-block mt-4" style={{ height: `${pageData.adHeight}px` }} data-height={`${pageData.adHeight}px`}>
-                                                        <span className="ad-sponsor-text">Sponsor Space Available</span>
-                                                    </div>
-                                                )}
+                                                {/* Push an Ad to the bottom to flexibly absorb any remaining whitespace */}
+                                                <div className="advertisement-block flex-grow mt-4" style={{ minHeight: '60px' }}>
+                                                    <span className="ad-sponsor-text">Sponsor Space Available</span>
+                                                </div>
                                             </main>
                                         </>
                                     ) : (
@@ -541,12 +604,10 @@ const PaperFooter = ({ pageIndex }) => {
                                                         </div>
                                                     )}
 
-                                                    {/* Push an Ad to the bottom if there is significant leftover space */}
-                                                    {pageData.adHeight > 0 && (
-                                                        <div className="advertisement-block mt-auto pt-4" style={{ height: `${pageData.adHeight}px` }} data-height={`${pageData.adHeight}px`}>
-                                                            <span className="ad-sponsor-text">Sponsor Space Available</span>
-                                                        </div>
-                                                    )}
+                                                    {/* Push an Ad to the bottom to flexibly absorb any remaining whitespace */}
+                                                    <div className="advertisement-block flex-grow mt-auto pt-4" style={{ minHeight: '60px' }}>
+                                                        <span className="ad-sponsor-text">Sponsor Space Available</span>
+                                                    </div>
                                                 </div>
                                             </main>
                                         </>
