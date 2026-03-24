@@ -12,11 +12,11 @@
 }
 
 .newspaper-page {
-    /* Exact A3 proportions, strictly enforced 297x420 aspect ratio */
+    /* Broadsheet proportions (15 x 22.75 inches at 96dpi) */
     width: 100%;
-    max-width: 1123px; /* Actual A3 pixel width at ~96dpi */
-    height: 1587px;    /* window A3 pixel height */
-    max-height: 1587px; /* Prevent long text stretching the page into a scroll */
+    max-width: 1440px; /* Actual Broadsheet pixel width */
+    height: 2184px;    /* window Broadsheet pixel height */
+    max-height: 2184px; /* Prevent long text stretching the page into a scroll */
     overflow: hidden;   /* Container must clip to preserve print dimensions */
     
     /* Flexbox layout to guarantee header/footer remain locked in place */
@@ -279,12 +279,28 @@
 
 /* Gapless Dense Grid Layout (Max 3 Columns) */
 .dynamic-news-masonry {
-    display: block; 
-    column-count: 3;
-    column-gap: 15px;
-    /* Default is column-fill: balance, which ensures the 3 columns are of equal height */
     width: 100%;
     margin-bottom: 20px;
+}
+
+/* Flex Masonry Override tightly fixes html2canvas layout gaps */
+.flex-masonry {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.masonry-flex-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: calc(33.333% - 13px);
+    margin-right: 20px;
+}
+
+.masonry-flex-col:last-child {
+    margin-right: 0;
 }
 
 /* Variable Column Widths based on Character Counts */
@@ -651,9 +667,9 @@
     }
 
     .newspaper-page {
-        padding: 30px !important;
-        width: 1123px !important;
-        height: 1587px !important; /* Fix to A3 height so it scales perfectly */
+        padding: 40px !important;
+        width: 1440px !important;
+        height: 2184px !important; /* Fix to Broadsheet height so it scales perfectly */
         max-width: none !important; /* DO NOT restrict width, forces browser scale-to-fit */
         max-height: none !important; 
         transform: none !important;

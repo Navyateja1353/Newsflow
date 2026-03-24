@@ -70,33 +70,52 @@ const Newspaper = () => {
         setPdfLoading(true);
 
         try {
-            const pdf = new jsPDF('p', 'pt', [1123, 1587]); // Exact A3 size in points based on CSS
-            
+            const pdf = new jsPDF('p', 'pt', [1080, 1638]); // Exact Broadsheet size in points (15 x 22.75 inches)
             // Find all newspaper pages that have been rendered into the DOM
             const pageElements = printAreaRef.current.querySelectorAll('.newspaper-page');
             
             for (let i = 0; i < pageElements.length; i++) {
                 const pageEl = pageElements[i];
                 
-                // Use classes instead of inline styles for rendering
+                // Backup existing styles
                 const originalClassName = pageEl.className;
+                const originalCssText = pageEl.style.cssText;
+                
+                // Force to explicit 1440px wide and 2184px tall for PDF rendering fidelity
                 pageEl.className = 'newspaper-page active-page';
+                pageEl.style.width = '1440px';
+                pageEl.style.minWidth = '1440px';
+                pageEl.style.maxWidth = '1440px';
+                pageEl.style.height = '2184px';
+                pageEl.style.minHeight = '2184px';
+                pageEl.style.maxHeight = '2184px';
                 
                 // Allow a tiny delay for browser to apply style changes before painting
                 await new Promise(resolve => setTimeout(resolve, 50));
                 
-                // Scale 3 provides crisp retina/print quality text for A3
-                const canvas = await html2canvas(pageEl, { scale: 3, useCORS: true, logging: false });
+                // Scale 3 provides crisp retina/print quality text for Broadsheet sizes. 
+                // Passed windowWidth guarantees the CSS multi-columns don't crunch together.
+                const canvas = await html2canvas(pageEl, { 
+                    scale: 3, 
+                    useCORS: true, 
+                    logging: false,
+                    width: 1440,
+                    height: 2184,
+                    windowWidth: 1440,
+                    windowHeight: 2184
+                });
+                
                 const imgData = canvas.toDataURL('image/jpeg', 0.95);
                 
                 if (i > 0) {
-                    pdf.addPage([1123, 1587], 'p');
+                    pdf.addPage([1080, 1638], 'p');
                 }
                 
-                // Add the captured image to fill the exact A3 page dimension
-                pdf.addImage(imgData, 'JPEG', 0, 0, 1123, 1587);
+                // Add the captured image to fill the exact Broadsheet page dimension
+                pdf.addImage(imgData, 'JPEG', 0, 0, 1080, 1638);
                 
-                // Restore its original hidden/shown state
+                // Restore its original hidden/shown state and styles
+                pageEl.style.cssText = originalCssText;
                 pageEl.className = originalClassName;
             }
 
@@ -160,8 +179,9 @@ const Newspaper = () => {
             // Content estimation
             const content = article.content || "";
             // In a 3-column layout, Telugu text is actually quite dense.
-            // Using a realistic physical width of 45 characters per line to force dense packing.
-            height += Math.ceil(content.length / 45) * 22; 
+            // In a Broadsheet 3-column layout, columns are very wide (approx 480px).
+            // Using a realistic physical width of 65 characters per line to force dense packing.
+            height += Math.ceil(content.length / 65) * 22; 
             
             return height;
         };
@@ -175,9 +195,8 @@ const Newspaper = () => {
                 const article = pool[i];
                 const estimatedHeight = estimateArticleHeight(article);
                 
-                // Allow a small 150px overflow buffer so we don't get stuck with 
-                // tiny unfillable spaces, taking advantage of CSS flex-grow to absorb differences.
-                if (currentHeight + estimatedHeight <= targetHeight + 150) {
+                // Allow a small 50px overflow buffer.
+                if (currentHeight + estimatedHeight <= targetHeight + 50) {
                     result.push(article);
                     currentHeight += estimatedHeight;
                     pool.splice(i, 1); // remove from pool
@@ -201,9 +220,9 @@ const Newspaper = () => {
             return { items: result, totalHeight: currentHeight, remaining: Math.max(0, targetHeight - currentHeight) };
         };
 
-        // Page 1 has massive headers/features, remaining masonry space is ~650px height.
-        // 650px * 3 columns = 1950px total vertical capacity for 1/3 width articles.
-        const page1Data = getArticlesByHeight(2200);
+        // Page 1 has massive headers/features, remaining masonry space is ~900px height.
+        // 900px * 3 columns = 2700px total vertical capacity for 1/3 width articles.
+        const page1Data = getArticlesByHeight(2700);
         const page1GridItems = page1Data.items;
 
         pages.push({
@@ -228,10 +247,10 @@ const Newspaper = () => {
                 });
                 pool = []; // Empty the pool so the loop terminales
             } else {
-                // Inner pages have ~1350px of vertical room. 
-                // 3 columns of 1350px = 4050px total capacity of 1/3 width articles.
-                // Target 5500px to forcefully overstuff the columns and rely on flex-wrap downwards flow.
-                const pageData = getArticlesByHeight(5500);
+                // Inner pages have ~1900px of vertical room on Broadsheets. 
+                // 3 columns of 1900px = 5700px total capacity of 1/3 width articles.
+                // Target strictly 5700px so it perfectly fills without overflowing vertically.
+                const pageData = getArticlesByHeight(5700);
                 const pageGridItems = pageData.items;
 
                 pages.push({
