@@ -22,8 +22,14 @@ const Newspaper = () => {
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [zoomedArticle, setZoomedArticle] = useState(null);
     const [pdfLoading, setPdfLoading] = useState(false);
+    
+    // Open the new Single Article Digital Card view
+    const handleArticleClick = (article) => {
+        if (article && article.id) {
+            window.open(`/article/${article.id}`, '_blank');
+        }
+    };
     const printAreaRef = useRef(null);
 
     // Format dates for display
@@ -542,33 +548,33 @@ const PaperFooter = ({ pageIndex }) => {
                                                 <div className="magazine-grid">
                                                     {(pageData.topFeatured && pageData.topFeatured[0]) && (
                                                         <div className="magazine-item lead">
-                                                            <ArticleCard article={pageData.topFeatured[0]} gridClass="feature" onArticleClick={setZoomedArticle} />
+                                                            <ArticleCard article={pageData.topFeatured[0]} gridClass="feature" onArticleClick={handleArticleClick} />
                                                         </div>
                                                     )}
                                                     {(pageData.topFeatured && pageData.topFeatured[1]) && (
                                                         <div className="magazine-item sidebar-left">
-                                                            <ArticleCard article={pageData.topFeatured[1]} gridClass="medium" onArticleClick={setZoomedArticle} />
+                                                            <ArticleCard article={pageData.topFeatured[1]} gridClass="medium" onArticleClick={handleArticleClick} />
                                                         </div>
                                                     )}
                                                     {(pageData.topFeatured && pageData.topFeatured[2]) && (
                                                         <div className="magazine-item sidebar-right">
-                                                            <ArticleCard article={pageData.topFeatured[2]} gridClass="medium" onArticleClick={setZoomedArticle} />
+                                                            <ArticleCard article={pageData.topFeatured[2]} gridClass="medium" onArticleClick={handleArticleClick} />
                                                         </div>
                                                     )}
                                                     {(pageData.topFeatured && pageData.topFeatured[3]) && (
                                                         <div className="magazine-item secondary">
-                                                            <ArticleCard article={pageData.topFeatured[3]} gridClass="large"  onArticleClick={setZoomedArticle} />
+                                                            <ArticleCard article={pageData.topFeatured[3]} gridClass="large"  onArticleClick={handleArticleClick} />
                                                         </div>
                                                     )}
                                                     {(pageData.topFeatured && pageData.topFeatured[4]) && (
                                                         <div className="magazine-item bottom-featured">
-                                                            <ArticleCard article={pageData.topFeatured[4]} gridClass="large" onArticleClick={setZoomedArticle} />
+                                                            <ArticleCard article={pageData.topFeatured[4]} gridClass="large" onArticleClick={handleArticleClick} />
                                                         </div>
                                                     )}
                                                 </div>
 
                                                 {/* Packed Grid Box underneath the magazine layout using new CSS Column algorithm */}
-                                                <LayoutEngine articles={pageData.gridItems || []} pageIndex={1} onArticleClick={setZoomedArticle} />
+                                                <LayoutEngine articles={pageData.gridItems || []} pageIndex={1} onArticleClick={handleArticleClick} />
 
                                                 {/* Push an Ad to the bottom to flexibly absorb any remaining whitespace */}
                                                 <div className="advertisement-block flex-grow mt-4" style={{ minHeight: '60px' }}>
@@ -603,7 +609,7 @@ const PaperFooter = ({ pageIndex }) => {
 
                                                     {/* Delegate rendering of Grid to Layout Engine */}
                                                     <div className="flex-grow">
-                                                        <LayoutEngine articles={pageData.gridItems || []} pageIndex={pageIndex + 1} onArticleClick={setZoomedArticle} />
+                                                        <LayoutEngine articles={pageData.gridItems || []} pageIndex={pageIndex + 1} onArticleClick={handleArticleClick} />
                                                     </div>
 
                                                     {/* Page 8 Publisher Block Element */}
@@ -641,18 +647,7 @@ const PaperFooter = ({ pageIndex }) => {
                 </div>
             </div>
 
-            {/* ZOOM MODAL OVERLAY */}
-            {zoomedArticle && (
-                <div className="article-zoom-modal no-print" onClick={(e) => {
-                    // Close if clicking outside the modal content
-                    if (e.target.className.includes('article-zoom-modal')) setZoomedArticle(null);
-                }}>
-                    <div className="zoom-modal-content">
-                        <button className="zoom-close-btn" onClick={() => setZoomedArticle(null)}>×</button>
-                        <ArticleCard article={zoomedArticle} gridClass="feature" bgClass="bg-white" />
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 };

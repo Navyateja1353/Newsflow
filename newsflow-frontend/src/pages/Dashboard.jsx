@@ -153,6 +153,15 @@ function Dashboard() {
                             }}>
                             Web Articles
                         </button>
+                        <button
+                            onClick={() => setActiveTab('settings')}
+                            style={{
+                                background: activeTab === 'settings' ? '#f59e0b' : 'transparent',
+                                color: activeTab === 'settings' ? 'white' : 'var(--text-color)',
+                                boxShadow: activeTab === 'settings' ? '0 4px 12px rgba(245, 158, 11, 0.3)' : 'none'
+                            }}>
+                            ⚙️ Site Settings
+                        </button>
                     </div>
 
                     {/* Pending Tab */}
@@ -258,6 +267,80 @@ function Dashboard() {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Settings Tab */}
+                    {activeTab === 'settings' && (
+                        <div className="glass-panel" style={{ background: 'rgba(245, 158, 11, 0.05)', borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+                            <h2 style={{ marginBottom: '1.5rem' }}>Site Settings</h2>
+                            <div style={{ padding: '1.5rem', background: 'white', borderRadius: '12px', borderLeft: '4px solid #f59e0b', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                                <h3 style={{ marginBottom: '1rem' }}>Update Global Logo</h3>
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Upload a new logo to accurately reflect current branding across newspaper pages and digital cards.</p>
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+                                        const reader = new FileReader();
+                                        reader.onloadend = async () => {
+                                            try {
+                                                await axios.post('http://localhost:3000/api/settings/logo', { value: reader.result }, { headers: { Authorization: `Bearer ${token}` } });
+                                                alert("Logo successfully updated! This change is now live across the platform.");
+                                            } catch(err) {
+                                                console.error(err);
+                                                alert("Error updating logo. Ensure the image is valid and the server is running.");
+                                            }
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }} 
+                                    style={{ display: 'block', marginBottom: '2rem' }} 
+                                />
+
+                                <hr style={{ border: 'none', borderTop: '1px solid #eee', marginBottom: '1.5rem' }} />
+
+                                <h3 style={{ marginBottom: '1rem' }}>Or Select an Existing Newspaper Logo</h3>
+                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                    {[
+                                        { id: 'rti', name: 'RTI Express', path: '/logos/rti.jpg' },
+                                        { id: 'bharath', name: 'Bharath Reporter', path: '/logos/bharath.jpg' },
+                                        { id: 'janam', name: 'Janam News', path: '/logos/janam.jpg' },
+                                        { id: 'national', name: 'National News', path: '/logos/national.jpg' },
+                                    ].map(logoOption => (
+                                        <div 
+                                            key={logoOption.id} 
+                                            onClick={async () => {
+                                                try {
+                                                    await axios.post('http://localhost:3000/api/settings/logo', { value: logoOption.path }, { headers: { Authorization: `Bearer ${token}` } });
+                                                    alert(`Logo successfully updated to ${logoOption.name}!`);
+                                                } catch(err) {
+                                                    alert("Error updating logo.");
+                                                }
+                                            }}
+                                            style={{ 
+                                                border: '2px solid #ddd', borderRadius: '8px', padding: '10px', 
+                                                cursor: 'pointer', textAlign: 'center', width: '150px',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseOver={(e) => e.currentTarget.style.borderColor = '#f59e0b'}
+                                            onMouseOut={(e) => e.currentTarget.style.borderColor = '#ddd'}
+                                        >
+                                            <div style={{ height: '60px', backgroundColor: '#f9f9f9', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: '12px' }}>
+                                                {/* Requires images in public/logos/ directory */}
+                                                <img src={logoOption.path} alt={logoOption.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                                                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} 
+                                                />
+                                                <span style={{ display: 'none' }}>No Extracted Image</span>
+                                            </div>
+                                            <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{logoOption.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '1rem' }}>
+                                    <em>Note: Make sure the 4 logo images are saved inside the `newsflow-frontend/public/logos` folder with names: rti.jpg, bharath.jpg, janam.jpg, national.jpg</em>
+                                </p>
                             </div>
                         </div>
                     )}

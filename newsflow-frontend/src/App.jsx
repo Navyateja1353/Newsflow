@@ -8,6 +8,7 @@ import EditNews from "./pages/EditNews";
 import Newspaper from "./pages/Newspaper";
 import EditSubmission from "./pages/EditSubmission";
 import EditPublished from "./pages/EditPublished";
+import SingleArticle from "./pages/SingleArticle";
 
 function App() {
 
@@ -23,6 +24,7 @@ function App() {
       <Route path="/newspaper/:page" element={<Newspaper />} />
       <Route path="/edit-submission/:id" element={<EditSubmission />} />
       <Route path="/edit-published/:id" element={<EditPublished />} />
+      <Route path="/article/:id" element={<SingleArticle />} />
     </Routes>
   );
 }

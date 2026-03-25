@@ -12,6 +12,7 @@ const newsRoutes = require("./routes/news");
 const adminRoutes = require("./routes/admin");
 const publicRoutes = require("./routes/public");
 const whatsappRoutes = require("./routes/whatsapp");
+const settingsRoutes = require("./routes/settings");
 const cors = require('cors');
 app.use(cors());
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -23,6 +24,7 @@ app.use("/api/news", newsRoutes);
 app.use("/api/admin", verifyToken, adminRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
+app.use("/api/settings", settingsRoutes);
 
 
 // ✅ Protected Route
