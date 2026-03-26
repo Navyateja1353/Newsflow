@@ -232,6 +232,9 @@ function Dashboard() {
                                             <button onClick={() => navigate(`/edit-published/${pub.id}`)} style={{ background: '#8b5cf6' }}>
                                                 Edit Live Article
                                             </button>
+                                            <button className="secondary-btn" onClick={() => window.open(`/article/${pub.id}`, '_blank')} style={{ flex: 1, backgroundColor: '#10b981', color: 'white', borderColor: '#10b981' }}>
+                                                👁️ View Digital Card
+                                            </button>
                                             <button className="secondary-btn" onClick={() => handleRevertPublished(pub.submission_id)} style={{ flex: 1 }}>
                                                 ↩️ Un-Publish to Pending
                                             </button>
@@ -263,6 +266,7 @@ function Dashboard() {
                                         </p>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <button className="secondary-btn" onClick={() => navigate(`/edit-news/${item.id}`)}>Edit</button>
+                                            <button className="secondary-btn" onClick={() => window.open(`/article/${item.id}`, '_blank')} style={{backgroundColor: '#10b981', color: 'white', borderColor: '#10b981'}}>👁️ Digital Card</button>
                                             <button className="secondary-btn" style={{ color: 'red' }} onClick={() => deleteNews(item.id)}>Discard</button>
                                         </div>
                                     </div>
@@ -363,6 +367,7 @@ function Dashboard() {
                                 </p>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     <button className="secondary-btn" onClick={() => navigate(`/edit-news/${item.id}`)}>Edit</button>
+                                    <button className="secondary-btn" onClick={() => window.open(`/article/${item.id}`, '_blank')} style={{backgroundColor: '#10b981', color: 'white', borderColor: '#10b981'}}>👁️ Digital Card</button>
                                     <button className="secondary-btn" style={{ color: 'red' }} onClick={() => deleteNews(item.id)}>Discard</button>
                                 </div>
                             </div>
