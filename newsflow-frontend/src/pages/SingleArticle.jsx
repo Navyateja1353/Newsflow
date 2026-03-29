@@ -120,10 +120,10 @@ function SingleArticle() {
             {/* Logo Section */}
             <div style={{ textAlign: "center", padding: "0" }}>
                 {logoSrc ? (
-                    <img src={logoSrc} alt="Newspaper Logo" style={{ width: "100%", height: "auto", display: "block" }} />
+                    <img src={logoSrc} alt="Newspaper Logo" style={{ maxWidth: "100%", maxHeight: "130px", width: "auto", height: "auto", display: "block", margin: "0 auto" }} />
                 ) : (
-                    <div style={{ border: "2px solid #8B008B", padding: "15px", backgroundColor: "#fff" }}>
-                        <span style={{ fontSize: "52px", fontWeight: "900", color: "#8B008B", letterSpacing: "1px", textTransform: "uppercase" }}>{newspaperName}</span>
+                    <div style={{ border: "2px solid #8B008B", padding: "15px", backgroundColor: "#fff", display: "inline-block", margin: "0 auto" }}>
+                        <span style={{ fontSize: "40px", fontWeight: "900", color: "#8B008B", letterSpacing: "1px", textTransform: "uppercase" }}>{newspaperName}</span>
                     </div>
                 )}
             </div>
@@ -135,7 +135,6 @@ function SingleArticle() {
                 fontSize: "14px", 
                 fontWeight: "600", 
                 color: "#222", 
-                borderBottom: "1px solid #ddd", 
                 marginBottom: "20px" 
             }}>
                 <span style={{ display: 'block', marginBottom: '5px' }}>{newspaperName} - {todayString}</span>
