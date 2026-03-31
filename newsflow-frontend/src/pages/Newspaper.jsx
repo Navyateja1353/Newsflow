@@ -227,8 +227,8 @@ const Newspaper = () => {
         };
 
         // Page 1 has massive headers/features, remaining masonry space is ~900px height.
-        // 900px * 3 columns = 2700px total vertical capacity for 1/3 width articles.
-        const page1Data = getArticlesByHeight(2700);
+        // Reduced slightly from 2700px to 2600px to prevent baseline text slicing.
+        const page1Data = getArticlesByHeight(2600);
         const page1GridItems = page1Data.items;
 
         pages.push({
@@ -253,10 +253,9 @@ const Newspaper = () => {
                 });
                 pool = []; // Empty the pool so the loop terminales
             } else {
-                // Inner pages have ~1900px of vertical room on Broadsheets. 
-                // 3 columns of 1900px = 5700px total capacity of 1/3 width articles.
-                // Target strictly 5700px so it perfectly fills without overflowing vertically.
-                const pageData = getArticlesByHeight(5700);
+                // Inner pages have ~1900px vertical room.
+                // Target strictly 5500px (reduced slightly from 5700px) so it safely fits without overflowing vertically.
+                const pageData = getArticlesByHeight(5500);
                 const pageGridItems = pageData.items;
 
                 pages.push({
@@ -269,66 +268,84 @@ const Newspaper = () => {
         }
     }
 
+const AdSpaceFiller = () => {
+    return (
+        <div style={{ display: 'flex', flexGrow: 1, width: '100%', marginTop: '5px', marginBottom: '5px', minHeight: '30px', border: '2px solid #bbbbbb', backgroundColor: '#f9f9f9', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+            <span style={{ fontWeight: 900, color: '#999999', fontSize: '24px', letterSpacing: '2px', textAlign: 'center', textTransform: 'uppercase', zIndex: 10 }}>
+                ADD
+            </span>
+            <span style={{ fontWeight: 'bold', color: '#aaaaaa', fontSize: '12px', marginTop: '5px', zIndex: 10 }}>
+                (Sponsor Space)
+            </span>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, backgroundImage: "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 2px, transparent 10px)", backgroundSize: "14px 14px" }}></div>
+        </div>
+    );
+};
+
 const PaperFooter = ({ pageIndex }) => {
     return (
-        <footer className="newspaper-footer no-print-break w-full shrink-0">
-            <div className="flex justify-between items-center px-4 mt-2 mb-4">
-                <div className="footer-copyright font-bold text-sm tracking-widest">{newspaperSettings.footerCopyright}</div>
-                <div className="flex items-center gap-4">
-                    <div className="flex h-4 items-center gap-12">
-                        {/* Cluster 1: CMYK + Light Blue */}
-                        <div className="flex gap-0 h-4">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#80d2ef' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
-                        </div>
-                        {/* Grayscale 1 */}
-                        <div className="flex gap-0 h-4 rounded-full overflow-hidden">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
-                        </div>
+        <footer className="newspaper-footer no-print-break w-full shrink-0 flex flex-col items-center justify-center mt-auto mb-2 relative pt-3">
+            {/* The distinct double black lines across the entire page that screams "this is the footer!" */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, borderTop: '4px solid #000' }}></div>
+            <div style={{ position: 'absolute', top: '6px', left: 0, right: 0, borderTop: '1px solid #000' }}></div>
 
-                        {/* Cluster 2: CMYK + Pink */}
-                        <div className="flex gap-0 h-4">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#f596c5' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
-                        </div>
-                        {/* Grayscale 2 */}
-                        <div className="flex gap-0 h-4 rounded-full overflow-hidden">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
-                        </div>
+            <div className="flex w-full max-w-4xl justify-between items-center h-4 mb-2 px-10">
+                {/* Cluster 1: CMYK + Light Blue */}
+                <div className="flex gap-0 h-4">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#80d2ef' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                </div>
+                {/* Grayscale 1 */}
+                <div className="flex gap-0 h-4 rounded-full overflow-hidden">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                </div>
 
-                        {/* Cluster 3: CMYK + Light Yellow */}
-                        <div className="flex gap-0 h-4">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#fff999' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
-                        </div>
-                        {/* Grayscale 3 */}
-                        <div className="flex gap-0 h-4 rounded-full overflow-hidden">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
-                        </div>
+                {/* Cluster 2: CMYK + Pink */}
+                <div className="flex gap-0 h-4">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#f596c5' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                </div>
+                {/* Grayscale 2 */}
+                <div className="flex gap-0 h-4 rounded-full overflow-hidden">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                </div>
 
-                        {/* Cluster 4: Basic CMYK + Grey */}
-                        <div className="flex gap-0 h-4">
-                            <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
-                            <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
-                        </div>
-                    </div>
+                {/* Cluster 3: CMYK + Light Yellow */}
+                <div className="flex gap-0 h-4">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#fff999' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                </div>
+                {/* Grayscale 3 */}
+                <div className="flex gap-0 h-4 rounded-full overflow-hidden">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#d1d2d4' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
+                </div>
+
+                {/* Cluster 4: Basic CMYK + Grey */}
+                <div className="flex gap-0 h-4">
+                    <div className="w-4 h-full" style={{ backgroundColor: '#00adef' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#e5007e' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#fff200' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#000000' }}></div>
+                    <div className="w-4 h-full" style={{ backgroundColor: '#808285' }}></div>
                 </div>
             </div>
+            {newspaperSettings.footerCopyright && (
+                <div className="footer-copyright font-bold text-xs tracking-widest text-center mt-1 text-gray-500">
+                    {newspaperSettings.footerCopyright}
+                </div>
+            )}
         </footer>
     );
 };
@@ -544,7 +561,7 @@ const PaperFooter = ({ pageIndex }) => {
                                                 </div>
                                             </header>
 
-                                            <main className="newspaper-content flex-grow">
+                                            <main className="newspaper-content flex-grow flex flex-col" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                                                 <div className="magazine-grid">
                                                     {(pageData.topFeatured && pageData.topFeatured[0]) && (
                                                         <div className="magazine-item lead">
@@ -576,17 +593,15 @@ const PaperFooter = ({ pageIndex }) => {
                                                 {/* Packed Grid Box underneath the magazine layout using new CSS Column algorithm */}
                                                 <LayoutEngine articles={pageData.gridItems || []} pageIndex={1} onArticleClick={handleArticleClick} />
 
-                                                {/* Push an Ad to the bottom to flexibly absorb any remaining whitespace */}
-                                                <div className="advertisement-block flex-grow mt-4" style={{ minHeight: '60px' }}>
-                                                    <span className="ad-sponsor-text">Sponsor Space Available</span>
-                                                </div>
+                                                {/* Ad Space Filler accurately mimicking the grid layout */}
+                                                <AdSpaceFiller />
                                             </main>
                                         </>
                                     ) : (
                                         /* INNER PAGES CONTENT (Page 2, 3...) */
                                         <>
-                                            <main className="newspaper-content flex-grow flex flex-col">
-                                                <div className="inner-page-section flex flex-col flex-grow">
+                                            <main className="newspaper-content flex-grow flex flex-col" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                                                <div className="inner-page-section flex flex-col flex-grow" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                                                     {/* INNER PAGE HEADER */}
                                                     <div className="inner-page-header no-print-break" style={{ marginBottom: '15px' }}>
                                                         <div className="inner-header-left">
@@ -629,10 +644,8 @@ const PaperFooter = ({ pageIndex }) => {
                                                         </div>
                                                     )}
 
-                                                    {/* Push an Ad to the bottom to flexibly absorb any remaining whitespace */}
-                                                    <div className="advertisement-block flex-grow mt-auto pt-4" style={{ minHeight: '60px' }}>
-                                                        <span className="ad-sponsor-text">Sponsor Space Available</span>
-                                                    </div>
+                                                    {/* Ad Space Filler accurately mimicking the grid layout */}
+                                                    <AdSpaceFiller />
                                                 </div>
                                             </main>
                                         </>

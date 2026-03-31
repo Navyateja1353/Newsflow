@@ -76,10 +76,30 @@ const LayoutEngine = ({ articles, pageIndex, onArticleClick }) => {
     });
 
     return (
-        <div className="dynamic-news-masonry flex-masonry">
+        <div className="dynamic-news-masonry flex-masonry" style={{ alignItems: 'stretch' }}>
             {columns.map((colItems, colIdx) => (
-                <div key={`col-${colIdx}`} className="masonry-flex-col">
+                <div key={`col-${colIdx}`} className="masonry-flex-col" style={{ display: 'flex', flexDirection: 'column' }}>
                     {colItems}
+                    {/* Flexible Ad Box to absorb any short-column gaps, creating flush bottoms */}
+                    <div style={{ 
+                        flexGrow: 1, 
+                        width: '100%', 
+                        marginTop: colItems.length > 0 ? '15px' : '0px', 
+                        border: '2px solid #bbbbbb', 
+                        backgroundColor: '#f9f9f9', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        position: 'relative', 
+                        overflow: 'hidden',
+                        minHeight: '60px' // Minimum height to always show an ad slot at bottom of column
+                    }}>
+                        <span style={{ fontWeight: 900, color: '#999999', fontSize: '18px', letterSpacing: '1px', textAlign: 'center', textTransform: 'uppercase', zIndex: 10 }}>
+                            ADD
+                        </span>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, backgroundImage: "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 2px, transparent 10px)", backgroundSize: "14px 14px" }}></div>
+                    </div>
                 </div>
             ))}
         </div>
