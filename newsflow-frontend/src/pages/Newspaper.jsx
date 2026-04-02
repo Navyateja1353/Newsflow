@@ -23,10 +23,25 @@ const Newspaper = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [pdfLoading, setPdfLoading] = useState(false);
+    const [isClippingMode, setIsClippingMode] = useState(false);
     
-    // Open the new Single Article Digital Card view
-    const handleArticleClick = (article) => {
-        if (article && article.id) {
+    // Open the new Single Article Digital Card view or Clip it
+    const handleArticleClick = async (article, event) => {
+        if (isClippingMode && event && event.currentTarget) {
+            try {
+                const element = event.currentTarget;
+                const canvas = await html2canvas(element, { scale: 3, useCORS: true, logging: false });
+                const link = document.createElement('a');
+                link.download = `Clip-${(article.headline || 'News').substring(0, 20)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                setIsClippingMode(false); // Turn off after successful clip
+            } catch (err) {
+                console.error("Clipping failed", err);
+                setIsClippingMode(false);
+                alert("క్లిప్పింగ్ విఫలమైంది (Clipping failed)");
+            }
+        } else if (article && article.id) {
             window.open(`/article/${article.id}`, '_blank');
         }
     };
@@ -404,9 +419,9 @@ const PaperFooter = ({ pageIndex }) => {
                     <a href="/" className="nav-link home-link">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
                     </a>
-                    <a href="#" className="nav-link">About Us</a>
-                    <a href="#" className="nav-link">Contact Us</a>
-                    <a href="#" className="nav-link">Privacy Policy</a>
+                    <a href="/about" className="nav-link">About Us</a>
+                    <a href="/contact" className="nav-link">Contact Us</a>
+                    <a href="/privacy" className="nav-link">Privacy Policy</a>
                 </div>
             </nav>
 
@@ -433,11 +448,11 @@ const PaperFooter = ({ pageIndex }) => {
 
                 <div className="toolbar-right">
                     <div className="btn-group-flush">
-                        <button className="toolbar-btn btn-clip" onClick={() => alert('క్లిప్ ఫీచర్ త్వరలో వస్తుంది (Clip feature coming soon)')}>
+                        <button className={`toolbar-btn btn-clip ${isClippingMode ? 'active-clip' : ''}`} onClick={() => setIsClippingMode(!isClippingMode)} style={isClippingMode ? {backgroundColor: '#e60000', color: '#fff', borderColor: '#e60000'} : {}}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 icon-inline"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
                             Clip
                         </button>
-                        <button className="toolbar-btn btn-archive" onClick={() => alert('ఆర్కైవ్ త్వరలో వస్తుంది (Archive coming soon)')}>
+                        <button className="toolbar-btn btn-archive" onClick={() => navigate('/archive')}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 icon-inline"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                             Archive
                         </button>
@@ -445,7 +460,13 @@ const PaperFooter = ({ pageIndex }) => {
                 </div>
             </div>
 
-            <div className="epaper-main-container">
+            <div className="epaper-main-container" style={{ position: 'relative' }}>
+                {isClippingMode && (
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: '#FFF200', color: '#000', padding: '10px 20px', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', borderBottom: '2px solid #E5007E', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                        <span className="mr-4">✂️ CLIPPING MODE: Click on any article in the newspaper below to download a high-quality image clip of ONLY that section!</span>
+                        <button onClick={() => setIsClippingMode(false)} style={{ background: '#E60000', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '10px' }}>Cancel</button>
+                    </div>
+                )}
                 {/* Left Sidebar */}
                 <div className="epaper-sidebar no-print">
                     <div className="sidebar-inner">

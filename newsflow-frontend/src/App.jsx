@@ -9,6 +9,10 @@ import Newspaper from "./pages/Newspaper";
 import EditSubmission from "./pages/EditSubmission";
 import EditPublished from "./pages/EditPublished";
 import SingleArticle from "./pages/SingleArticle";
+import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Archive from "./pages/Archive";
 
 function App() {
 
@@ -25,6 +29,10 @@ function App() {
       <Route path="/edit-submission/:id" element={<EditSubmission />} />
       <Route path="/edit-published/:id" element={<EditPublished />} />
       <Route path="/article/:id" element={<SingleArticle />} />
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/contact" element={<ContactUs />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/archive" element={<Archive />} />
     </Routes>
   );
 }

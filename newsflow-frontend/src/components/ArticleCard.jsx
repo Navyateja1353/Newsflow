@@ -56,7 +56,7 @@ const ArticleCard = ({ article, onArticleClick, gridClass = "medium", bgClass = 
         <article 
             className={`news-block ${gridClass} ${bgClass} cursor-pointer relative`} 
             style={{ gridRowEnd: rowSpan }}
-            onClick={() => onArticleClick && onArticleClick(article)} 
+            onClick={(e) => onArticleClick && onArticleClick(article, e)}
             title="Zoom in"
         >
             <div className="article-inner flex flex-col h-full w-full">
